@@ -18,25 +18,27 @@ class TakePictureScreen extends StatefulWidget {
 class TakePictureScreenState extends State<TakePictureScreen> {
   late CameraController _controller;
   late Future<void> _initializeControllerFuture;
+  late ResolutionPreset resl;
 
   @override
   void initState() {
     super.initState();
     // To display the current output from the Camera,
     // create a CameraController.
+    resl = ResolutionPreset.medium;
     _controller = CameraController(
       // Get a specific camera from the list of available cameras.
       widget.camera,
       // Define the resolution to use.
-      ResolutionPreset.high,
+      resl,
     );
-
     // Next, initialize the controller. This returns a Future.
     _initializeControllerFuture = _controller.initialize();
   }
 
   @override
   void dispose() {
+    // Dispose of the controller when the widget is disposed.
     _controller.dispose();
     super.dispose();
   }
