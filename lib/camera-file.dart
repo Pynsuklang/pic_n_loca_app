@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:io';
-
+import 'package:geolocator/geolocator.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
@@ -21,20 +21,30 @@ class TakePictureScreenState extends State<TakePictureScreen> {
   late CameraController _controller;
   late Future<void> _initializeControllerFuture;
   late ResolutionPreset resl;
+  var loctn1 = "";
+  var loctn2 = "";
+
+  getLocation() async {
+    Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high);
+    loctn1 = position.latitude.toString();
+    loctn2 = position.longitude.toString();
+    print('Printing text before getCurrentLocation()');
+    print("latitude is");
+    print(loctn1);
+    print("longitude is");
+    print(loctn2);
+  }
 
   @override
   void initState() {
     super.initState();
-    // To display the current output from the Camera,
-    // create a CameraController.
+    getLocation();
     resl = ResolutionPreset.medium;
     _controller = CameraController(
-      // Get a specific camera from the list of available cameras.
       widget.camera,
-      // Define the resolution to use.
       resl,
     );
-    // Next, initialize the controller. This returns a Future.
     _initializeControllerFuture = _controller.initialize();
   }
 
