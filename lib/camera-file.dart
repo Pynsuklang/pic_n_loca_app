@@ -3,6 +3,8 @@ import 'dart:io';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:gallery_saver/gallery_saver.dart';
 
 class TakePictureScreen extends StatefulWidget {
   TakePictureScreen({
@@ -69,9 +71,9 @@ class TakePictureScreenState extends State<TakePictureScreen> {
                   try {
                     await _initializeControllerFuture;
                     final image = await _controller.takePicture();
-
-                    // if (!mounted) return;
-                    print("image.path is ${image.path}");
+                    //image is saved as cache, so we need to transfer it to gallery
+                    await GallerySaver.saveImage(image.path,
+                        toDcim: true); //here we transfer from cache to gallery
                     // If the picture was taken, display it on a new screen.
                     await Navigator.of(context).push(
                       MaterialPageRoute(
