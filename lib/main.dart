@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:pic_n_loca_app/camera-file.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -33,14 +34,43 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   late var cameras;
+  dynamic tkn;
+  // removeValue() async {
+  //   SharedPreferences prefs = await SharedPreferences.getInstance();
+  //   prefs.setString('key', "");
+  // }
+
+  saveValue() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setString('key', "value");
+  }
+
+  getValue() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? strx = prefs.getString('key');
+    return strx;
+  }
+
+  myfunc() {
+    tkn = 1;
+  }
+
   @override
   void initState() {
     super.initState();
+    print("App started");
+    saveValue();
+    getValue().then((vals) {
+      setState(() {
+        tkn = vals;
+      });
+    });
     initwidgets();
   }
 
   @override
   void dispose() {
+    print("App closed");
     super.dispose();
   }
 
@@ -53,7 +83,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Camera App"),
+        title: const Text("Camera App"),
       ),
       body: Center(
         child: Column(
@@ -75,8 +105,10 @@ class _MyHomePageState extends State<MyHomePage> {
                 builder: (context) => TakePictureScreen(camera: firstCamera)),
           );
         },
-        tooltip: 'Take Picture',
-        child: const Icon(Icons.camera_alt),
+        //tooltip: tkn != "" ? 'Take Picture' : 'take pics',
+        child: tkn == "value"
+            ? const Icon(Icons.camera_alt)
+            : const Icon(Icons.access_alarm),
       ),
     );
   }
