@@ -27,13 +27,12 @@ class TakePictureScreenState extends State<TakePictureScreen> {
   getLocation() async {
     Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high);
-    loctn1 = position.latitude.toString();
-    loctn2 = position.longitude.toString();
+    setState(() {
+      loctn1 = position.latitude.toString();
+      loctn2 = position.longitude.toString();
+    });
+
     print('Printing text before getCurrentLocation()');
-    print("latitude is");
-    print(loctn1);
-    print("longitude is");
-    print(loctn2);
   }
 
   @override
@@ -91,6 +90,8 @@ class TakePictureScreenState extends State<TakePictureScreen> {
                           // Pass the automatically generated path to
                           // the DisplayPictureScreen widget.
                           imagePath: image.path,
+                          latitd: loctn1,
+                          longitd: loctn2,
                         ),
                       ),
                     );
@@ -118,16 +119,44 @@ class TakePictureScreenState extends State<TakePictureScreen> {
 // A widget that displays the picture taken by the user.
 class DisplayPictureScreen extends StatelessWidget {
   final String imagePath;
-
-  const DisplayPictureScreen({required this.imagePath});
+  final latitd;
+  final longitd;
+  const DisplayPictureScreen(
+      {required this.imagePath, this.latitd, this.longitd});
 
   @override
   Widget build(BuildContext context) {
+    var lat = latitd;
+    print("latitude is $lat");
+    var body = Container(
+      child: Column(children: [
+        Image.file(File(imagePath)),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            FloatingActionButton(
+              // Provide an onPressed callback.
+              onPressed: () async {
+                try {
+//here we transfer from cache to gallery
+
+                } catch (e) {
+                  // If an error occurs, log the error to the console.
+                  print(e);
+                }
+              },
+              child: const Icon(Icons.camera_alt),
+            ),
+          ],
+        ),
+      ]),
+    );
+
     return Scaffold(
       appBar: AppBar(title: const Text('Display the Picture')),
       // The image is stored as a file on the device. Use the `Image.file`
       // constructor with the given path to display the image.
-      body: Image.file(File(imagePath)),
+      body: body,
     );
   }
 }
