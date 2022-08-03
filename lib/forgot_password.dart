@@ -1,7 +1,6 @@
 // ignore_for_file: deprecated_member_use
 
 import 'package:flutter/material.dart';
-import 'package:pic_n_loca_app/create_account.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'homepage.dart';
 
@@ -16,17 +15,17 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: MyLoginPage(),
+      home: ForgotPasswordPage(),
     );
   }
 }
 
-class MyLoginPage extends StatefulWidget {
+class ForgotPasswordPage extends StatefulWidget {
   @override
-  _MyLoginPageState createState() => _MyLoginPageState();
+  _ForgotPasswordPageState createState() => _ForgotPasswordPageState();
 }
 
-class _MyLoginPageState extends State<MyLoginPage> {
+class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   // Create a text controller and use it to retrieve the current value
   // of the TextField.
   final username_controller = TextEditingController();
@@ -125,10 +124,7 @@ class _MyLoginPageState extends State<MyLoginPage> {
             ),
             TextButton(
               onPressed: () {
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => CreateAccountPage()));
+                //forgot password screen
               },
               child: const Text(
                 'Create Account',

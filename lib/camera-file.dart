@@ -50,14 +50,6 @@ class TakePictureScreenState extends State<TakePictureScreen> {
   @override
   void initState() {
     super.initState();
-    saveValue();
-
-    getValue().then((vals) {
-      setState(() {
-        tkn = vals;
-        print("tkn is $tkn");
-      });
-    });
     getLocation();
     resl = ResolutionPreset.medium;
     _controller = CameraController(
