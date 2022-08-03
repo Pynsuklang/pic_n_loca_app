@@ -5,6 +5,7 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:gallery_saver/gallery_saver.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class TakePictureScreen extends StatefulWidget {
   TakePictureScreen({
@@ -23,6 +24,17 @@ class TakePictureScreenState extends State<TakePictureScreen> {
   late ResolutionPreset resl;
   var loctn1 = "";
   var loctn2 = "";
+  dynamic tkn;
+  saveValue() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setString('key', "0"); //1 for logged in and 0 for logged out
+  }
+
+  getValue() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? strx = prefs.getString('key');
+    return strx;
+  }
 
   getLocation() async {
     Position position = await Geolocator.getCurrentPosition(
@@ -38,6 +50,14 @@ class TakePictureScreenState extends State<TakePictureScreen> {
   @override
   void initState() {
     super.initState();
+    saveValue();
+
+    getValue().then((vals) {
+      setState(() {
+        tkn = vals;
+        print("tkn is $tkn");
+      });
+    });
     getLocation();
     resl = ResolutionPreset.medium;
     _controller = CameraController(

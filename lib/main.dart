@@ -1,115 +1,123 @@
-import 'dart:async';
-import 'dart:io';
-import 'package:camera/camera.dart';
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
-import 'package:pic_n_loca_app/camera-file.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'homepage.dart';
 
-Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  runApp(CameraApp());
-}
+void main() => runApp(MyApp());
 
-class CameraApp extends StatelessWidget {
+class MyApp extends StatelessWidget {
+  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Codeplayon Flutter Demo',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: MyHomePage(),
+      home: MyLoginPage(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  // const MyHomePage({Key? key, required this.title}) : super(key: key);
-
-  // final String title;
-
+class MyLoginPage extends StatefulWidget {
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  _MyLoginPageState createState() => _MyLoginPageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  late var cameras;
-  dynamic tkn;
-  // removeValue() async {
-  //   SharedPreferences prefs = await SharedPreferences.getInstance();
-  //   prefs.setString('key', "");
-  // }
-
-  saveValue() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setString('key', "value");
-  }
-
-  getValue() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? strx = prefs.getString('key');
-    return strx;
-  }
-
-  myfunc() {
-    tkn = 1;
-  }
-
+class _MyLoginPageState extends State<MyLoginPage> {
+  // Create a text controller and use it to retrieve the current value
+  // of the TextField.
+  final username_controller = TextEditingController();
+  final password_controller = TextEditingController();
+  late SharedPreferences logindata;
+  late bool newuser;
   @override
   void initState() {
+    // TODO: implement initState
     super.initState();
-    print("App started");
-    saveValue();
-    getValue().then((vals) {
-      setState(() {
-        tkn = vals;
-      });
-    });
-    initwidgets();
+    check_if_already_login();
+  }
+
+  void check_if_already_login() async {
+    logindata = await SharedPreferences.getInstance();
+    newuser = (logindata.getBool('login') ?? true);
+    print(newuser);
+    if (newuser == false) {
+      Navigator.pushReplacement(
+          context, new MaterialPageRoute(builder: (context) => MyDashboard()));
+    }
   }
 
   @override
   void dispose() {
-    print("App closed");
+    //Clean up the controller when the widget is disposed.
+    username_controller.dispose();
+    password_controller.dispose();
     super.dispose();
-  }
-
-  @override
-  initwidgets() async {
-    cameras = await availableCameras();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Camera App"),
+        title: const Text("Shared Preferences"),
+        automaticallyImplyLeading: false,
       ),
       body: Center(
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
-            Text(
-              'Click on the camera button below',
-              style: Theme.of(context).textTheme.headline4,
+            const Text(
+              "Login Form",
+              style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
             ),
+            const Text(
+              "To show Example of Shared Preferences",
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(15.0),
+              child: TextField(
+                controller: username_controller,
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  labelText: 'username',
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(15.0),
+              child: TextField(
+                controller: password_controller,
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  labelText: 'Password',
+                ),
+              ),
+            ),
+            RaisedButton(
+              textColor: Colors.white,
+              color: Colors.blue,
+              onPressed: () {
+                String username = username_controller.text;
+                String password = password_controller.text;
+                if (username != '' && password != '') {
+                  print('Successfull');
+                  logindata.setBool('login', false);
+                  //login is false if logged in, login is true if logged out
+                  logindata.setString('username', username);
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (context) => MyDashboard()));
+                }
+              },
+              child: Text("Log-In"),
+            )
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          var firstCamera = cameras.first;
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (context) => TakePictureScreen(camera: firstCamera)),
-          );
-        },
-        //tooltip: tkn != "" ? 'Take Picture' : 'take pics',
-        child: tkn == "value"
-            ? const Icon(Icons.camera_alt)
-            : const Icon(Icons.access_alarm),
       ),
     );
   }
 }
+
+//
