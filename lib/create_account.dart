@@ -1,6 +1,9 @@
 // ignore_for_file: deprecated_member_use
 
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'package:gallery_saver/files.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'homepage.dart';
 import 'main.dart';
@@ -98,9 +101,28 @@ class CreateAccountForm extends StatefulWidget {
 class _CreateAccountFormState extends State<CreateAccountForm> {
   final _pass = TextEditingController();
   final _confirmpass = TextEditingController();
+  final name_controller = TextEditingController();
   final username_controller = TextEditingController();
   final password_controller = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  dynamic resp;
+
+  Future<http.Response> CreateAccountRequest(
+      dynamic name, dynamic usnm, dynamic pwd) async {
+    var response = null;
+    var url = Uri.parse("http://10.179.28.7:8080/api/create-account");
+
+    Map data = {'name': name, 'usnm': usnm, 'pwd': pwd};
+    //encode Map to JSON
+    var body = json.encode(data);
+
+    response = await http.post(url,
+        headers: {"Content-Type": "application/json"}, body: body);
+    print("${response.statusCode}");
+    print("${response.body}");
+    return response;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Form(
@@ -109,13 +131,29 @@ class _CreateAccountFormState extends State<CreateAccountForm> {
           children: [
             Padding(
               padding: const EdgeInsets.all(15.0),
-              child: TextField(
-                controller: username_controller,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  labelText: 'username',
-                ),
-              ),
+              child: TextFormField(
+                  controller: name_controller,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    labelText: 'name',
+                  ),
+                  validator: (val) {
+                    if (val!.isEmpty) return 'This field cannot be empty';
+                    return null;
+                  }),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(15.0),
+              child: TextFormField(
+                  controller: username_controller,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    labelText: 'username',
+                  ),
+                  validator: (val) {
+                    if (val!.isEmpty) return 'This field cannot be empty';
+                    return null;
+                  }),
             ),
             Padding(
               padding: const EdgeInsets.all(15.0),
@@ -127,7 +165,7 @@ class _CreateAccountFormState extends State<CreateAccountForm> {
                     labelText: 'password',
                   ),
                   validator: (val) {
-                    if (val!.isEmpty) return 'Empty';
+                    if (val!.isEmpty) return 'This field cannot be empty';
                     return null;
                   }),
             ),
@@ -157,11 +195,33 @@ class _CreateAccountFormState extends State<CreateAccountForm> {
               color: Colors.blue,
               onPressed: () {
                 print('Successfull');
-
+                String username = username_controller.text;
+                String password = password_controller.text;
+                String name = name_controller.text;
                 if (_formKey.currentState!.validate()) {
-                  print("gg");
-                } else {
-                  print("error");
+                  print('Successfull');
+
+                  CreateAccountRequest(name, username, password).then((vals) {
+                    setState(() {
+                      print("vals is ${vals.body}");
+                      resp = vals.body;
+
+                      if (resp == '1') {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text('Account Already Existed')));
+                      } else if (resp == '0') {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content:
+                                    Text('Account Created Successfully!!!')));
+                      } else if (resp != '0' || resp != '1') {
+                        print("resp now is $resp");
+                        ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Server Error!!!')));
+                      }
+                    });
+                  });
                 }
               },
               child: Text("Create Account"),

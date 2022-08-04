@@ -1,9 +1,12 @@
 // ignore_for_file: deprecated_member_use
 
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:pic_n_loca_app/create_account.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'homepage.dart';
+import 'package:http/http.dart' as http;
 
 void main() => runApp(MyApp());
 
@@ -29,32 +32,16 @@ class MyLoginPage extends StatefulWidget {
 class _MyLoginPageState extends State<MyLoginPage> {
   // Create a text controller and use it to retrieve the current value
   // of the TextField.
-  final username_controller = TextEditingController();
-  final password_controller = TextEditingController();
-  late SharedPreferences logindata;
-  late bool newuser;
+
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
-    check_if_already_login();
-  }
-
-  void check_if_already_login() async {
-    logindata = await SharedPreferences.getInstance();
-    newuser = (logindata.getBool('login') ?? true);
-    print(newuser);
-    if (newuser == false) {
-      Navigator.pushReplacement(
-          context, new MaterialPageRoute(builder: (context) => MyDashboard()));
-    }
   }
 
   @override
   void dispose() {
     //Clean up the controller when the widget is disposed.
-    username_controller.dispose();
-    password_controller.dispose();
     super.dispose();
   }
 
@@ -69,52 +56,7 @@ class _MyLoginPageState extends State<MyLoginPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
-            const Text(
-              "Login Form",
-              style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
-            ),
-            const Text(
-              "To show Example of Shared Preferences",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(15.0),
-              child: TextField(
-                controller: username_controller,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  labelText: 'username',
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(15.0),
-              child: TextField(
-                obscureText: true,
-                controller: password_controller,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  labelText: 'Password',
-                ),
-              ),
-            ),
-            RaisedButton(
-              textColor: Colors.white,
-              color: Colors.blue,
-              onPressed: () {
-                String username = username_controller.text;
-                String password = password_controller.text;
-                if (username != '' && password != '') {
-                  print('Successfull');
-                  logindata.setBool('login', false);
-                  //login is false if logged in, login is true if logged out
-                  logindata.setString('username', username);
-                  Navigator.push(context,
-                      MaterialPageRoute(builder: (context) => MyDashboard()));
-                }
-              },
-              child: Text("Log-In"),
-            ),
+            const LoginForm(),
             TextButton(
               onPressed: () {
                 //forgot password screen
@@ -142,3 +84,130 @@ class _MyLoginPageState extends State<MyLoginPage> {
 }
 
 //
+class LoginForm extends StatefulWidget {
+  const LoginForm({Key? key}) : super(key: key);
+
+  @override
+  State<LoginForm> createState() => _LoginFormState();
+}
+
+class _LoginFormState extends State<LoginForm> {
+  final usernameCtrl = TextEditingController();
+  final passwordCtrl = TextEditingController();
+  final formKey = GlobalKey<FormState>();
+  late SharedPreferences logindata;
+  late bool newuser;
+  dynamic resp;
+
+  Future<http.Response> postRequest(dynamic usnm, dynamic pwd) async {
+    var url = Uri.parse("http://10.179.28.7:8080/api/user-login");
+
+    Map data = {'usnm': usnm, 'pwd': pwd};
+    //encode Map to JSON
+    var body = json.encode(data);
+
+    var response = await http.post(url,
+        headers: {"Content-Type": "application/json"}, body: body);
+    return response;
+  }
+
+  // ignore: non_constant_identifier_names
+  void check_if_already_login() async {
+    logindata = await SharedPreferences.getInstance();
+    newuser = (logindata.getBool('login') ?? true);
+    print(newuser);
+    if (newuser == false) {
+      Navigator.pushReplacement(
+          context, MaterialPageRoute(builder: (context) => MyDashboard()));
+    }
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    check_if_already_login();
+  }
+
+  @override
+  void dispose() {
+    //Clean up the controller when the widget is disposed.
+    usernameCtrl.dispose();
+    passwordCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Form(
+      key: formKey,
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(15.0),
+            child: TextFormField(
+                controller: usernameCtrl,
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  labelText: 'username',
+                ),
+                validator: (val) {
+                  if (val!.isEmpty) return 'This field cannot be empty';
+                  return null;
+                }),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(15.0),
+            child: TextFormField(
+                obscureText: true,
+                controller: passwordCtrl,
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  labelText: 'Password',
+                ),
+                validator: (val) {
+                  if (val!.isEmpty) return 'This field cannot be empty';
+                  return null;
+                }),
+          ),
+          RaisedButton(
+            textColor: Colors.white,
+            color: Colors.blue,
+            onPressed: () {
+              String username = usernameCtrl.text;
+              String password = passwordCtrl.text;
+              if (formKey.currentState!.validate()) {
+                print('Successfull');
+
+                postRequest(username, password).then((vals) {
+                  setState(() {
+                    print("vals is ${vals.body}");
+                    resp = vals.body;
+                    print("resp is $resp");
+                    if (resp == '0') {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                          content: Text('Login Successfull!!!')));
+                      logindata.setBool('login', false);
+                      logindata.setString('username', username);
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => MyDashboard()));
+                    } else if (resp == '1') {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                          content: Text('Unauthorised Credentials!!!')));
+                    } else if (resp != '1' || resp != '0') {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Server Error!!!')));
+                    }
+                  });
+                });
+              }
+            },
+            child: const Text("Log-In"),
+          )
+        ],
+      ),
+    );
+  }
+}
