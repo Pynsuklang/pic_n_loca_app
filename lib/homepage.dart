@@ -1,5 +1,8 @@
+import 'package:camera/camera.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:pic_n_loca_app/my_home_page.dart';
+import 'camera-file.dart';
 import 'main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -13,7 +16,7 @@ class MainPage extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: MyDashboard(),
+      home: const MYHome(),
     );
   }
 }
@@ -26,6 +29,10 @@ class MyDashboard extends StatefulWidget {
 class _MyDashboardState extends State<MyDashboard> {
   late String username;
   late bool newuser;
+  late var cameras;
+  initwidgets() async {
+    cameras = await availableCameras();
+  }
 
   void check_if_already_login() async {
     logindata = await SharedPreferences.getInstance();
@@ -50,6 +57,7 @@ class _MyDashboardState extends State<MyDashboard> {
     super.initState();
     check_if_already_login();
     initial();
+    initwidgets();
   }
 
   void initial() async {
@@ -76,15 +84,30 @@ class _MyDashboardState extends State<MyDashboard> {
           child: MyDrawer(),
         ),
         appBar: AppBar(
-          centerTitle: true,
-          title: const Text('Other Page'),
+          title: const Text("Camera App"),
         ),
-        body: const Padding(
-          padding: EdgeInsets.all(30),
-          child: Text(
-            'Are you looking for a way to go back? Hmm...',
-            style: TextStyle(fontSize: 24),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Text(
+                'Click on the camera button below',
+                style: Theme.of(context).textTheme.headline4,
+              ),
+            ],
           ),
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            var firstCamera = cameras.first;
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => TakePictureScreen(camera: firstCamera)),
+            );
+          },
+          //tooltip: tkn != "" ? 'Take Picture' : 'take pics',
+          child: const Icon(Icons.camera_alt),
         ),
       ),
     );

@@ -5,6 +5,7 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:gallery_saver/gallery_saver.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class TakePictureScreen extends StatefulWidget {
@@ -37,12 +38,21 @@ class TakePictureScreenState extends State<TakePictureScreen> {
   }
 
   getLocation() async {
-    Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high);
-    setState(() {
-      loctn1 = position.latitude.toString();
-      loctn2 = position.longitude.toString();
-    });
+    LocationPermission permission;
+    permission = await Geolocator.checkPermission();
+    print("permission is $permission");
+    permission = await Geolocator.requestPermission();
+    if (permission == LocationPermission.denied) {
+      //nothing
+      openAppSettings();
+    } else {
+      Position position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high);
+      setState(() {
+        loctn1 = position.latitude.toString();
+        loctn2 = position.longitude.toString();
+      });
+    }
 
     print('Printing text before getCurrentLocation()');
   }

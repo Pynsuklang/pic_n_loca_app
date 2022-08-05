@@ -32,8 +32,6 @@ class CreateAccountPage extends StatefulWidget {
 class _CreateAccountPageState extends State<CreateAccountPage> {
   // Create a text controller and use it to retrieve the current value
   // of the TextField.
-  final username_controller = TextEditingController();
-  final password_controller = TextEditingController();
 
   late SharedPreferences logindata;
   late bool newuser;
@@ -47,8 +45,6 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
   @override
   void dispose() {
     //Clean up the controller when the widget is disposed.
-    username_controller.dispose();
-    password_controller.dispose();
     super.dispose();
   }
 
@@ -111,8 +107,8 @@ class _CreateAccountFormState extends State<CreateAccountForm> {
       dynamic name, dynamic usnm, dynamic pwd) async {
     var response = null;
     var url = Uri.parse("http://10.179.28.7:8080/api/create-account");
-
-    Map data = {'name': name, 'usnm': usnm, 'pwd': pwd};
+    print("password is $pwd");
+    var data = {'name': name, 'usnm': usnm, 'pwd': pwd};
     //encode Map to JSON
     var body = json.encode(data);
 
@@ -196,7 +192,7 @@ class _CreateAccountFormState extends State<CreateAccountForm> {
               onPressed: () {
                 print('Successfull');
                 String username = username_controller.text;
-                String password = password_controller.text;
+                String password = _pass.text;
                 String name = name_controller.text;
                 if (_formKey.currentState!.validate()) {
                   print('Successfull');

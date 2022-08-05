@@ -102,7 +102,7 @@ class _LoginFormState extends State<LoginForm> {
   Future<http.Response> postRequest(dynamic usnm, dynamic pwd) async {
     var url = Uri.parse("http://10.179.28.7:8080/api/user-login");
 
-    Map data = {'usnm': usnm, 'pwd': pwd};
+    Map data = {'email': usnm, 'password': pwd};
     //encode Map to JSON
     var body = json.encode(data);
 

@@ -5,7 +5,9 @@ import 'package:pic_n_loca_app/main2.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'camera-file.dart';
+import 'homepage.dart';
 import 'login_screen.dart';
+import 'main.dart';
 
 class MYHome extends StatefulWidget {
   const MYHome({Key? key}) : super(key: key);
@@ -15,21 +17,38 @@ class MYHome extends StatefulWidget {
 }
 
 class _MYHomeState extends State<MYHome> {
-  dynamic tkn;
+  late String username;
+  late bool newuser;
 
-  getValue() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? strx = prefs.getString('key');
-    return strx;
+  void check_if_already_login() async {
+    logindata = await SharedPreferences.getInstance();
+    newuser = (logindata.getBool('login') ?? true);
+    print(newuser);
+    if (newuser == true) {
+      Navigator.pushReplacement(
+          context, new MaterialPageRoute(builder: (context) => MyLoginPage()));
+    }
+  }
+
+  Future<bool> _onBackPressed() {
+    Navigator.of(context).pop();
+    Navigator.push(context,
+        MaterialPageRoute(builder: (BuildContext context) => MyLoginPage()));
+    return Future.value(true);
   }
 
   @override
   void initState() {
+    // TODO: implement initState
     super.initState();
-    getValue().then((vals) {
-      setState(() {
-        tkn = vals;
-      });
+    check_if_already_login();
+    initial();
+  }
+
+  void initial() async {
+    logindata = await SharedPreferences.getInstance();
+    setState(() {
+      username = logindata.getString('username')!;
     });
   }
 
@@ -40,7 +59,7 @@ class _MYHomeState extends State<MYHome> {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: tkn == "1" ? MyHomePage() : const LoginScreen(),
+      home: MyHomePage(),
     );
   }
 }
