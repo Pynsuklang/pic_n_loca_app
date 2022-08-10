@@ -1,6 +1,8 @@
 // ignore_for_file: deprecated_member_use
 
 import 'dart:convert';
+import 'dart:io';
+import 'package:connectivity/connectivity.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:gallery_saver/files.dart';
@@ -103,20 +105,43 @@ class _CreateAccountFormState extends State<CreateAccountForm> {
   final _formKey = GlobalKey<FormState>();
   dynamic resp;
 
+  // ignore: non_constant_identifier_names
   Future<http.Response> CreateAccountRequest(
       dynamic name, dynamic usnm, dynamic pwd) async {
     var response = null;
-    var url = Uri.parse("http://10.179.28.7:8080/api/create-account");
-    print("password is $pwd");
-    var data = {'name': name, 'usnm': usnm, 'pwd': pwd};
-    //encode Map to JSON
-    var body = json.encode(data);
+    try {
+      var url = Uri.parse("http://10.179.28.7:8080/api/create-account");
+      print("password is $pwd");
+      var data = {'name': name, 'usnm': usnm, 'pwd': pwd};
+      //encode Map to JSON
+      var body = json.encode(data);
 
-    response = await http.post(url,
-        headers: {"Content-Type": "application/json"}, body: body);
-    print("${response.statusCode}");
-    print("${response.body}");
-    return response;
+      response = await http.post(url,
+          headers: {"Content-Type": "application/json"}, body: body);
+      print("${response.statusCode}");
+      print("${response.body}");
+      return response;
+    } catch (e) {
+      response = 'e';
+      return response;
+      // ignore: dead_code_catch_following_catch
+    } on SocketException catch (_) {
+      response = 'e';
+      return response;
+    }
+  }
+
+  Future<bool> checkInternet() async {
+    bool conn;
+    var connectivityResult = await (Connectivity().checkConnectivity());
+    if (connectivityResult == ConnectivityResult.mobile) {
+      conn = true;
+    } else if (connectivityResult == ConnectivityResult.wifi) {
+      conn = true;
+    } else {
+      conn = false;
+    }
+    return conn;
   }
 
   @override
@@ -189,35 +214,46 @@ class _CreateAccountFormState extends State<CreateAccountForm> {
             RaisedButton(
               textColor: Colors.white,
               color: Colors.blue,
-              onPressed: () {
+              onPressed: () async {
                 print('Successfull');
                 String username = username_controller.text;
                 String password = _pass.text;
                 String name = name_controller.text;
                 if (_formKey.currentState!.validate()) {
                   print('Successfull');
-
-                  CreateAccountRequest(name, username, password).then((vals) {
-                    setState(() {
-                      print("vals is ${vals.body}");
-                      resp = vals.body;
-
-                      if (resp == '1') {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content: Text('Account Already Existed')));
-                      } else if (resp == '0') {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content:
-                                    Text('Account Created Successfully!!!')));
-                      } else if (resp != '0' || resp != '1') {
-                        print("resp now is $resp");
-                        ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Server Error!!!')));
-                      }
-                    });
+                  var chkInternet = await checkInternet().then((conn2) {
+                    print("conn2 is $conn2");
+                    return conn2;
                   });
+                  if (chkInternet == "true") {
+                    CreateAccountRequest(name, username, password).then((vals) {
+                      setState(() {
+                        print("vals is ${vals.body}");
+                        resp = vals.body;
+
+                        if (resp == '1') {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content: Text('Account Already Existed')));
+                        } else if (resp == '0') {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content:
+                                      Text('Account Created Successfully!!!')));
+                        } else if (resp == '3') {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Server Error!!!')));
+                        } else if (resp == 'e') {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content: Text('Server Unreachable!!!')));
+                        }
+                      });
+                    });
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                        content: Text('Internet Not Available!!!')));
+                  }
                 }
               },
               child: Text("Create Account"),

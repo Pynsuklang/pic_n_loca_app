@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'package:geolocator/geolocator.dart';
 import 'package:camera/camera.dart';
@@ -7,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:gallery_saver/gallery_saver.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
 
 class TakePictureScreen extends StatefulWidget {
   TakePictureScreen({
@@ -25,16 +27,33 @@ class TakePictureScreenState extends State<TakePictureScreen> {
   late ResolutionPreset resl;
   var loctn1 = "";
   var loctn2 = "";
-  dynamic tkn;
-  saveValue() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setString('key', "0"); //1 for logged in and 0 for logged out
-  }
+  // ignore: non_constant_identifier_names
+  Future<http.Response> SendData(
+      dynamic name, dynamic usnm, dynamic pwd) async {
+    var response = null;
+    try {
+      var url = Uri.parse("http://10.179.28.7:8080/api/store-data");
+      print("password is $pwd");
+      var data = {'name': name, 'usnm': usnm, 'pwd': pwd};
+      //encode Map to JSON
+      var body = json.encode(data);
 
-  getValue() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? strx = prefs.getString('key');
-    return strx;
+      response = await http.post(url,
+          headers: {"Content-Type": "application/json"}, body: body);
+      print("${response.statusCode}");
+      print("${response.body}");
+      return response;
+    } catch (e) {
+      response = 'e';
+      return response;
+      // ignore: dead_code_catch_following_catch
+    } on SocketException catch (_) {
+      response = 'e';
+      return response;
+    } on HttpException {
+      response = 'httpex';
+      return response;
+    }
   }
 
   getLocation() async {
@@ -159,10 +178,7 @@ class DisplayPictureScreen extends StatelessWidget {
             FloatingActionButton(
               // Provide an onPressed callback.
               onPressed: () async {
-                try {
-//here we transfer from cache to gallery
-
-                } catch (e) {
+                try {} catch (e) {
                   // If an error occurs, log the error to the console.
                   print(e);
                 }

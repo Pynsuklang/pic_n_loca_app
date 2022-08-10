@@ -1,7 +1,8 @@
 // ignore_for_file: deprecated_member_use
 
 import 'dart:convert';
-
+import 'dart:io';
+import 'package:connectivity/connectivity.dart';
 import 'package:flutter/material.dart';
 import 'package:pic_n_loca_app/create_account.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -99,16 +100,37 @@ class _LoginFormState extends State<LoginForm> {
   late bool newuser;
   dynamic resp;
 
-  Future<http.Response> postRequest(dynamic usnm, dynamic pwd) async {
-    var url = Uri.parse("http://10.179.28.7:8080/api/user-login");
+  postRequest(dynamic usnm, dynamic pwd) async {
+    var response;
+    var responseDecode;
+    try {
+      var url = Uri.parse("http://10.179.28.7:8080/api/user-login");
+      Map data = {'email': usnm, 'password': pwd};
+      var body = json.encode(data);
+      response = await http.post(url,
+          headers: {"Content-Type": "application/json"}, body: body);
+      try {
+        responseDecode = json.decode(response.body);
+        print("responseDecode is $responseDecode");
+        return responseDecode;
+      } catch (e) {}
+    } on SocketException catch (_) {
+      responseDecode = 2;
+      return responseDecode;
+    }
+  }
 
-    Map data = {'email': usnm, 'password': pwd};
-    //encode Map to JSON
-    var body = json.encode(data);
-
-    var response = await http.post(url,
-        headers: {"Content-Type": "application/json"}, body: body);
-    return response;
+  Future<bool> checkInternet() async {
+    bool conn;
+    var connectivityResult = await (Connectivity().checkConnectivity());
+    if (connectivityResult == ConnectivityResult.mobile) {
+      conn = true;
+    } else if (connectivityResult == ConnectivityResult.wifi) {
+      conn = true;
+    } else {
+      conn = false;
+    }
+    return conn;
   }
 
   // ignore: non_constant_identifier_names
@@ -173,35 +195,51 @@ class _LoginFormState extends State<LoginForm> {
           RaisedButton(
             textColor: Colors.white,
             color: Colors.blue,
-            onPressed: () {
+            onPressed: () async {
               String username = usernameCtrl.text;
               String password = passwordCtrl.text;
               if (formKey.currentState!.validate()) {
                 print('Successfull');
-
-                postRequest(username, password).then((vals) {
-                  setState(() {
-                    print("vals is ${vals.body}");
-                    resp = vals.body;
-                    print("resp is $resp");
-                    if (resp == '0') {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                          content: Text('Login Successfull!!!')));
-                      logindata.setBool('login', false);
-                      logindata.setString('username', username);
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => MyDashboard()));
-                    } else if (resp == '1') {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                          content: Text('Unauthorised Credentials!!!')));
-                    } else if (resp != '1' || resp != '0') {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Server Error!!!')));
-                    }
-                  });
+                var chkInternet = await checkInternet().then((conn2) {
+                  print("conn2 is $conn2");
+                  return conn2;
                 });
+                if (chkInternet == true) {
+                  postRequest(username, password).then((vals) {
+                    setState(() {
+                      print("vals is $vals");
+                      resp = vals;
+                      print("resp is $resp");
+                      if (resp == 0) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text('Login Successfull!!!')));
+                        logindata.setBool('login', false);
+                        logindata.setString('username', username);
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => MyDashboard()));
+                      } else if (resp == 1) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text('Unauthorised Credentials!!!')));
+                      } else if (resp == 2) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text('Server Unreachable!!!')));
+                      } else if (resp == 3) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Server Error!!!')));
+                      } else {
+                        const CircularProgressIndicator();
+                      }
+                    });
+                  });
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      content: Text('Internet Not Available!!!')));
+                }
               }
             },
             child: const Text("Log-In"),
