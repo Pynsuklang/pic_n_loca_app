@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:connectivity/connectivity.dart';
 import 'package:flutter/material.dart';
 import 'package:pic_n_loca_app/create_account.dart';
+import 'package:pic_n_loca_app/forgot-pwd.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'homepage.dart';
 import 'package:http/http.dart' as http;
@@ -60,7 +61,10 @@ class _MyLoginPageState extends State<MyLoginPage> {
             const LoginForm(),
             TextButton(
               onPressed: () {
-                //forgot password screen
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const ForgotPwdPg()));
               },
               child: const Text(
                 'Forgot Password',
@@ -199,9 +203,7 @@ class _LoginFormState extends State<LoginForm> {
               String username = usernameCtrl.text;
               String password = passwordCtrl.text;
               if (formKey.currentState!.validate()) {
-                print('Successfull');
                 var chkInternet = await checkInternet().then((conn2) {
-                  print("conn2 is $conn2");
                   return conn2;
                 });
                 if (chkInternet == true) {

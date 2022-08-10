@@ -50,9 +50,6 @@ class TakePictureScreenState extends State<TakePictureScreen> {
     } on SocketException catch (_) {
       response = 'e';
       return response;
-    } on HttpException {
-      response = 'httpex';
-      return response;
     }
   }
 

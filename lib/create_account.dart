@@ -10,22 +10,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'homepage.dart';
 import 'main.dart';
 
-void main() => runApp(MyApp());
-
-class MyApp extends StatelessWidget {
-  // This widget is the root of your application.
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Codeplayon Flutter Demo',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: CreateAccountPage(),
-    );
-  }
-}
-
 class CreateAccountPage extends StatefulWidget {
   @override
   _CreateAccountPageState createState() => _CreateAccountPageState();
@@ -106,9 +90,9 @@ class _CreateAccountFormState extends State<CreateAccountForm> {
   dynamic resp;
 
   // ignore: non_constant_identifier_names
-  Future<http.Response> CreateAccountRequest(
-      dynamic name, dynamic usnm, dynamic pwd) async {
-    var response = null;
+  CreateAccountRequest(dynamic name, dynamic usnm, dynamic pwd) async {
+    var response;
+    var responseDecode;
     try {
       var url = Uri.parse("http://10.179.28.7:8080/api/create-account");
       print("password is $pwd");
@@ -118,16 +102,15 @@ class _CreateAccountFormState extends State<CreateAccountForm> {
 
       response = await http.post(url,
           headers: {"Content-Type": "application/json"}, body: body);
-      print("${response.statusCode}");
-      print("${response.body}");
-      return response;
-    } catch (e) {
-      response = 'e';
-      return response;
-      // ignore: dead_code_catch_following_catch
+
+      try {
+        responseDecode = json.decode(response.body);
+        print("responseDecode is $responseDecode");
+        return responseDecode;
+      } catch (e) {}
     } on SocketException catch (_) {
-      response = 'e';
-      return response;
+      responseDecode = 2;
+      return responseDecode;
     }
   }
 
@@ -215,35 +198,30 @@ class _CreateAccountFormState extends State<CreateAccountForm> {
               textColor: Colors.white,
               color: Colors.blue,
               onPressed: () async {
-                print('Successfull');
                 String username = username_controller.text;
                 String password = _pass.text;
                 String name = name_controller.text;
                 if (_formKey.currentState!.validate()) {
-                  print('Successfull');
                   var chkInternet = await checkInternet().then((conn2) {
-                    print("conn2 is $conn2");
                     return conn2;
                   });
-                  if (chkInternet == "true") {
+                  if (chkInternet == true) {
                     CreateAccountRequest(name, username, password).then((vals) {
                       setState(() {
-                        print("vals is ${vals.body}");
-                        resp = vals.body;
-
-                        if (resp == '1') {
+                        resp = vals;
+                        if (resp == 1) {
                           ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                   content: Text('Account Already Existed')));
-                        } else if (resp == '0') {
+                        } else if (resp == 0) {
                           ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                   content:
                                       Text('Account Created Successfully!!!')));
-                        } else if (resp == '3') {
+                        } else if (resp == 3) {
                           ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(content: Text('Server Error!!!')));
-                        } else if (resp == 'e') {
+                        } else if (resp == 2) {
                           ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                   content: Text('Server Unreachable!!!')));
