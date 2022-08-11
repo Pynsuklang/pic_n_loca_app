@@ -105,6 +105,7 @@ class _LoginFormState extends State<LoginForm> {
   dynamic resp;
 
   postRequest(dynamic usnm, dynamic pwd) async {
+    print("hhh");
     var response;
     var responseDecode;
     try {
@@ -230,7 +231,7 @@ class _LoginFormState extends State<LoginForm> {
                         ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                                 content: Text('Server Unreachable!!!')));
-                      } else if (resp == 3) {
+                      } else if (resp == 3 || resp == null) {
                         ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text('Server Error!!!')));
                       } else {

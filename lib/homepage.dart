@@ -1,7 +1,11 @@
+import 'dart:io';
+
 import 'package:camera/camera.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:pic_n_loca_app/my_home_page.dart';
+import 'package:image_picker/image_picker.dart';
 import 'camera-file.dart';
 import 'main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -30,6 +34,7 @@ class _MyDashboardState extends State<MyDashboard> {
   late String username;
   late bool newuser;
   late var cameras;
+  File? image;
   initwidgets() async {
     cameras = await availableCameras();
   }
@@ -67,6 +72,22 @@ class _MyDashboardState extends State<MyDashboard> {
     });
   }
 
+  pickImage() async {
+    try {
+      final image = await ImagePicker().pickImage(source: ImageSource.gallery);
+      print("image is $image");
+      if (image == null) {
+        print("is null");
+      }
+
+      final imageTemp = File(image!.path);
+      print("image path is $imageTemp");
+      setState(() => this.image = imageTemp);
+    } on PlatformException catch (e) {
+      print('Failed to pick image: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -88,26 +109,55 @@ class _MyDashboardState extends State<MyDashboard> {
         ),
         body: Center(
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              Text(
-                'Click on the camera button below',
-                style: Theme.of(context).textTheme.headline4,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(10, 350, 20, 0),
+                    child: FloatingActionButton(
+                      onPressed: () {
+                        var firstCamera = cameras.first;
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) =>
+                                  TakePictureScreen(camera: firstCamera)),
+                        );
+                      },
+                      //tooltip: tkn != "" ? 'Take Picture' : 'take pics',
+                      child: const Icon(Icons.camera_alt),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(50, 350, 10, 0),
+                    child: FloatingActionButton(
+                      onPressed: () async {
+                        final images = await ImagePicker()
+                            .pickImage(source: ImageSource.gallery);
+                        print("image is $images");
+                      },
+                      //tooltip: tkn != "" ? 'Take Picture' : 'take pics',
+                      child: const Icon(Icons.folder),
+                    ),
+                  )
+                ],
               ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(10, 10, 20, 0),
+                    child: Text("Take snapshot"),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(10, 10, 20, 0),
+                    child: Text("Choose picture"),
+                  )
+                ],
+              )
             ],
           ),
-        ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () {
-            var firstCamera = cameras.first;
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => TakePictureScreen(camera: firstCamera)),
-            );
-          },
-          //tooltip: tkn != "" ? 'Take Picture' : 'take pics',
-          child: const Icon(Icons.camera_alt),
         ),
       ),
     );

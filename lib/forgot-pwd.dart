@@ -5,6 +5,7 @@ import 'package:connectivity/connectivity.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'homepage.dart';
+import 'main.dart';
 
 class ForgotPwdPg extends StatefulWidget {
   const ForgotPwdPg({Key? key}) : super(key: key);
@@ -91,7 +92,6 @@ class _ForgotPwdState extends State<ForgotPwd> {
           headers: {"Content-Type": "application/json"}, body: body);
       try {
         responseDecode = json.decode(response.body);
-        print("responseDecode is $responseDecode");
         return responseDecode;
       } catch (e) {}
     } on SocketException catch (_) {
@@ -152,7 +152,16 @@ class _ForgotPwdState extends State<ForgotPwd> {
               }
             },
             child: const Text("Get Reset Link"),
-          )
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (context) => MyLoginPage()));
+            },
+            child: const Text(
+              'Already have an account?',
+            ),
+          ),
         ],
       ),
     );
