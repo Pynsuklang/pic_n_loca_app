@@ -11,6 +11,7 @@ import 'homepage.dart';
 import 'package:http/http.dart' as http;
 
 void main() => runApp(MyApp());
+var glbusrname;
 
 class MyApp extends StatelessWidget {
   // This widget is the root of your application.
@@ -214,6 +215,7 @@ class _LoginFormState extends State<LoginForm> {
                       resp = vals;
                       print("resp is $resp");
                       if (resp == 0) {
+                        glbusrname = username;
                         ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                                 content: Text('Login Successfull!!!')));

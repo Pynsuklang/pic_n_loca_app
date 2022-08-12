@@ -26,6 +26,8 @@ class MainPage extends StatelessWidget {
 }
 
 class MyDashboard extends StatefulWidget {
+  const MyDashboard({Key? key}) : super(key: key);
+
   @override
   _MyDashboardState createState() => _MyDashboardState();
 }
@@ -148,11 +150,11 @@ class _MyDashboardState extends State<MyDashboard> {
                 children: <Widget>[
                   Container(
                     padding: const EdgeInsets.fromLTRB(10, 10, 20, 0),
-                    child: Text("Take snapshot"),
+                    child: const Text("Take snapshot"),
                   ),
                   Container(
                     padding: const EdgeInsets.fromLTRB(10, 10, 20, 0),
-                    child: Text("Choose picture"),
+                    child: const Text("Choose picture"),
                   )
                 ],
               )

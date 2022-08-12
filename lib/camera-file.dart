@@ -10,6 +10,8 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 
+import 'main.dart';
+
 class TakePictureScreen extends StatefulWidget {
   TakePictureScreen({
     required this.camera,
@@ -28,30 +30,6 @@ class TakePictureScreenState extends State<TakePictureScreen> {
   var loctn1 = "";
   var loctn2 = "";
   // ignore: non_constant_identifier_names
-  Future<http.Response> SendData(
-      dynamic name, dynamic usnm, dynamic pwd) async {
-    var response = null;
-    try {
-      var url = Uri.parse("http://10.179.28.7:8080/api/store-data");
-      print("password is $pwd");
-      var data = {'name': name, 'usnm': usnm, 'pwd': pwd};
-      //encode Map to JSON
-      var body = json.encode(data);
-
-      response = await http.post(url,
-          headers: {"Content-Type": "application/json"}, body: body);
-      print("${response.statusCode}");
-      print("${response.body}");
-      return response;
-    } catch (e) {
-      response = 'e';
-      return response;
-      // ignore: dead_code_catch_following_catch
-    } on SocketException catch (_) {
-      response = 'e';
-      return response;
-    }
-  }
 
   getLocation() async {
     LocationPermission permission;
@@ -146,11 +124,7 @@ class TakePictureScreenState extends State<TakePictureScreen> {
       ),
     );
     return Scaffold(
-        appBar: AppBar(title: const Text('Take a picture')),
-        // You must wait until the controller is initialized before displaying the
-        // camera preview. Use a FutureBuilder to display a loading spinner until the
-        // controller has finished initializing.
-        body: body);
+        appBar: AppBar(title: const Text('Take a picture')), body: body);
   }
 }
 
@@ -160,11 +134,49 @@ class DisplayPictureScreen extends StatelessWidget {
   final latitd;
   final longitd;
   const DisplayPictureScreen(
-      {required this.imagePath, this.latitd, this.longitd});
+      {required this.imagePath, required this.latitd, required this.longitd});
+  SendData(dynamic latit, dynamic longit, dynamic imgpth) async {
+    var response = null;
+    var responseDecode;
+    try {
+      var url = Uri.parse("http://10.179.28.7:8080/api/store-data");
+      Map<String, String> headers = {
+        'Content-Type': 'multipart/form-data',
+      };
+      Map<String, String> data = {
+        'latitude': latit,
+        'longitude': longit,
+        'emailid': glbusrname
+      };
+      //final body = json.encode(data);
+      var request = http.MultipartRequest('POST', url)
+        ..fields.addAll(data)
+        ..headers.addAll(headers)
+        ..files.add(await http.MultipartFile.fromPath('image', imgpth));
+      var response = await request.send();
+      ////
+
+      final respStr = await response.stream.bytesToString();
+      print("submitted latitude is $respStr");
+      //encode Map to JSON
+
+      return responseDecode;
+    } catch (e) {
+      print("error is $e");
+      responseDecode = 'e';
+      return responseDecode;
+    }
+    // on SocketException catch (_) {
+    // responseDecode = 'e';
+    // return responseDecode;
+    // }
+  }
 
   @override
   Widget build(BuildContext context) {
     var lat = latitd;
+    var longt = longitd;
+    var imgpth = imagePath;
     print("latitude is $lat");
     var body = Container(
       child: Column(children: [
@@ -175,14 +187,20 @@ class DisplayPictureScreen extends StatelessWidget {
             FloatingActionButton(
               // Provide an onPressed callback.
               onPressed: () async {
-                try {} catch (e) {
+                try {
+                  SendData(lat, longt, imgpth);
+                } catch (e) {
                   // If an error occurs, log the error to the console.
                   print(e);
                 }
               },
-              child: const Icon(Icons.camera_alt),
+              child: const Icon(Icons.upload_file),
             ),
           ],
+        ),
+        Container(
+          //padding: const EdgeInsets.fromLTRB(10, 10, 20, 0),
+          child: Text("Upload"),
         ),
       ]),
     );
