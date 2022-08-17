@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
- 
+
 void main() => runApp(const LoginScreen());
- 
+
 class LoginScreen extends StatelessWidget {
   const LoginScreen({Key? key}) : super(key: key);
- 
+
   static const String _title = 'Sample App';
- 
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -15,21 +15,22 @@ class LoginScreen extends StatelessWidget {
         appBar: AppBar(title: const Text(_title)),
         body: const MyStatefulWidget(),
       ),
+      debugShowCheckedModeBanner: false,
     );
   }
 }
- 
+
 class MyStatefulWidget extends StatefulWidget {
   const MyStatefulWidget({Key? key}) : super(key: key);
- 
+
   @override
   State<MyStatefulWidget> createState() => _MyStatefulWidgetState();
 }
- 
+
 class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   TextEditingController nameController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
- 
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -78,7 +79,9 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
               onPressed: () {
                 //forgot password screen
               },
-              child: const Text('Forgot Password',),
+              child: const Text(
+                'Forgot Password',
+              ),
             ),
             Container(
                 height: 50,
@@ -89,8 +92,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
                     print(nameController.text);
                     print(passwordController.text);
                   },
-                )
-            ),
+                )),
             Row(
               children: <Widget>[
                 const Text('Does not have account?'),

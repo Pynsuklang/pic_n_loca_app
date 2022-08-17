@@ -12,6 +12,8 @@ import 'package:http/http.dart' as http;
 
 void main() => runApp(MyApp());
 var glbusrname;
+var loctn1 = "";
+var loctn2 = "";
 
 class MyApp extends StatelessWidget {
   // This widget is the root of your application.
@@ -206,6 +208,7 @@ class _LoginFormState extends State<LoginForm> {
               String password = passwordCtrl.text;
               if (formKey.currentState!.validate()) {
                 var chkInternet = await checkInternet().then((conn2) {
+                  print("conn2 is $conn2");
                   return conn2;
                 });
                 if (chkInternet == true) {

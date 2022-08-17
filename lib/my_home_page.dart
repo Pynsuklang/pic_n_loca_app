@@ -60,6 +60,7 @@ class _MYHomeState extends State<MYHome> {
         primarySwatch: Colors.blue,
       ),
       home: MyHomePage(),
+      debugShowCheckedModeBanner: false,
     );
   }
 }

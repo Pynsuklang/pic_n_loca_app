@@ -4,6 +4,8 @@ import 'package:camera/camera.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:pic_n_loca_app/my_home_page.dart';
 import 'package:image_picker/image_picker.dart';
 import 'camera-file.dart';
@@ -21,6 +23,7 @@ class MainPage extends StatelessWidget {
         primarySwatch: Colors.blue,
       ),
       home: const MYHome(),
+      debugShowCheckedModeBanner: false,
     );
   }
 }
@@ -39,6 +42,25 @@ class _MyDashboardState extends State<MyDashboard> {
   File? image;
   initwidgets() async {
     cameras = await availableCameras();
+  }
+
+  getLocation() async {
+    LocationPermission permission;
+    permission = await Geolocator.checkPermission();
+    print("permission is $permission");
+    permission = await Geolocator.requestPermission();
+    if (permission == LocationPermission.denied) {
+      //nothing
+      openAppSettings();
+    } else {
+      Position position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high);
+      setState(() {
+        loctn1 = position.latitude.toString();
+        loctn2 = position.longitude.toString();
+      });
+    }
+    print("latitude is $loctn1 and longitude is $loctn2");
   }
 
   void check_if_already_login() async {
@@ -65,6 +87,7 @@ class _MyDashboardState extends State<MyDashboard> {
     check_if_already_login();
     initial();
     initwidgets();
+    getLocation();
   }
 
   void initial() async {
