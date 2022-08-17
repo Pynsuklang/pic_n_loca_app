@@ -82,7 +82,7 @@ class TakePictureScreenState extends State<TakePictureScreen> {
                 // If the Future is complete, display the preview.
                 return CameraPreview(_controller);
               } else {
-                // Otherwise, display a loading indicator.
+                // Otherwise, display a loading indicatos.
                 return const Center(child: CircularProgressIndicator());
               }
             },
