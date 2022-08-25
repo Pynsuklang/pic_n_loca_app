@@ -75,6 +75,15 @@ class TakePictureScreenState extends State<TakePictureScreen> {
     super.dispose();
   }
 
+  getStorageDirectory() async {
+    if (Platform.isAndroid) {
+      return (await getExternalStorageDirectory())!
+          .path; // OR return "/storage/emulated/0/Download";
+    } else {
+      return (await getApplicationDocumentsDirectory()).path;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     var body = Container(
@@ -102,15 +111,15 @@ class TakePictureScreenState extends State<TakePictureScreen> {
                   try {
                     await _initializeControllerFuture;
                     final image = await _controller.takePicture();
-                    //image is saved as cache, so we need to transfer it to gallery
-                    await GallerySaver.saveImage(image.path,
-                        toDcim: true); //here we transfer from cache to gallery
-                    // If the picture was taken, display it on a new screen.
+                    await GallerySaver.saveImage(image.path, toDcim: true);
+                    // var dir = getStorageDirectory().then((dirx) {
+                    //   return dirx;
+                    // });
+
+                    // print("dir is $dir");
                     await Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (context) => ImagePreview(
-                          // Pass the automatically generated path to
-                          // the DisplayPictureScreen widget.
                           imagePath: image.path,
                           latitd: loctn1,
                           longitd: loctn2,
@@ -120,6 +129,8 @@ class TakePictureScreenState extends State<TakePictureScreen> {
                   } catch (e) {
                     // If an error occurs, log the error to the console.
                     print(e);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Error within the app')));
                   }
                 },
                 child: const Icon(Icons.camera_alt),

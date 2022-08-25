@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:connectivity/connectivity.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/cupertino.dart';
@@ -43,41 +44,63 @@ class _ImagePreviewState extends State<ImagePreview> {
     getLocation();
   }
 
+  Future<bool> checkInternet() async {
+    bool conn;
+    var connectivityResult = await (Connectivity().checkConnectivity());
+    if (connectivityResult == ConnectivityResult.mobile) {
+      conn = true;
+    } else if (connectivityResult == ConnectivityResult.wifi) {
+      conn = true;
+    } else {
+      conn = false;
+    }
+    return conn;
+  }
+
   @override
   Widget build(BuildContext context) {
     var lat = widget.latitd;
     var longt = widget.longitd;
     var imgpth = widget.imagePath;
-    print("latitude is $lat");
-    print("longitude is $longt");
-    print("image path is $imgpth");
-    SendData(dynamic latit, dynamic longit, dynamic imgpth) async {
+
+    SendData(dynamic latit2, dynamic longit2, dynamic imgpth2) async {
       late var response;
       late var responseDecode;
+      print("latitude is $latit2");
+      print("longitude is $longit2");
+      print("image path is $imgpth2");
       try {
-        print("image path inside senddata is $imgpth");
-        var url = Uri.parse("http://10.179.28.7:8080/api/store-data");
-        Map<String, String> headers = {
-          'Content-Type': 'multipart/form-data',
-        };
-        Map<String, String> data = {
-          'latitude': latit,
-          'longitude': longit,
-          'emailid': glbusrname
-        };
-        //final body = json.encode(data);
-        var request = http.MultipartRequest('POST', url)
-          ..fields.addAll(data)
-          ..headers.addAll(headers)
-          ..files.add(await http.MultipartFile.fromPath('image', imgpth));
-        var response = await request.send();
-        ////
+        var chkInternet = await checkInternet().then((conn2) {
+          return conn2;
+        });
+        if (chkInternet == true) {
+          print("image path inside senddata is $imgpth");
+          var url = Uri.parse("http://10.179.28.7:8080/api/store-data");
+          Map<String, String> headers = {
+            'Content-Type': 'multipart/form-data',
+          };
+          Map<String, String> data = {
+            'latitude': latit2,
+            'longitude': longit2,
+            'emailid': glbusrname
+          };
+          //final body = json.encode(data);
+          var request = http.MultipartRequest('POST', url)
+            ..fields.addAll(data)
+            ..headers.addAll(headers)
+            ..files.add(await http.MultipartFile.fromPath('image', imgpth2));
+          var response = await request.send();
+          ////
 
-        final respStr = await response.stream.bytesToString();
-        print("response from api is $respStr");
-        //encode Map to JSON
-        responseDecode = respStr;
-        return responseDecode;
+          final respStr = await response.stream.bytesToString();
+          print("response from api is $respStr");
+          //encode Map to JSON
+          responseDecode = respStr;
+          return responseDecode;
+        } else {
+          responseDecode = 'ni';
+          return responseDecode;
+        }
       } catch (e) {
         print("error is $e");
         responseDecode = 'e';
@@ -94,6 +117,11 @@ class _ImagePreviewState extends State<ImagePreview> {
             FloatingActionButton(
               // Provide an onPressed callback.
               onPressed: () async {
+                var chkInternet = await checkInternet().then((conn2) {
+                  print("conn2 is $conn2");
+                  return conn2;
+                });
+
                 try {
                   //SendData(lat, longt, imgpth);
                   var sig = await SendData(lat, longt, imgpth).then((vals) {
@@ -106,6 +134,10 @@ class _ImagePreviewState extends State<ImagePreview> {
                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                         content:
                             Text('Data is submitted and saved successfully')));
+                  } else if (sig == 'ni') {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                        content: Text(
+                            'Internet Not Available. File will be uploaded on immidiate availability of internet!!!')));
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('ERROR!!!')));
