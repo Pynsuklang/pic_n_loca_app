@@ -239,6 +239,9 @@ class _LoginFormState extends State<LoginForm> {
                       } else if (resp == 3 || resp == null) {
                         ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text('Server Error!!!')));
+                      } else if (resp == 4) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Permission not yet granted by admin')));
                       } else {
                         const CircularProgressIndicator();
                       }

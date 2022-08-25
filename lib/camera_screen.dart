@@ -18,153 +18,81 @@ class CameraScreen extends StatefulWidget {
 class _CameraScreenState extends State<CameraScreen>
     with WidgetsBindingObserver {
   CameraController? controller;
-  VideoPlayerController? videoController;
-
-  File? _imageFile;
-  File? _videoFile;
-
-// Initial values
   bool _isCameraInitialized = false;
-  bool _isRearCameraSelected = true;
-  bool _isVideoCameraSelected = false;
-  bool _isRecordingInProgress = false;
-  double _minAvailableExposureOffset = 0.0;
-  double _maxAvailableExposureOffset = 0.0;
+  List<CameraDescription> cameras = [];
+  final resolutionPresets = ResolutionPreset.values;
+  ResolutionPreset currentResolutionPreset = ResolutionPreset.high;
   double _minAvailableZoom = 1.0;
   double _maxAvailableZoom = 1.0;
-
-// Current values
   double _currentZoomLevel = 1.0;
-  double _currentExposureOffset = 0.0;
-  FlashMode? _currentFlashMode;
 
-  List<File> allFileList = [];
+  void onNewCameraSelected(CameraDescription cameraDescription) async {
+    final previousCameraController = controller;
+    // Instantiating the camera controller
+    final CameraController cameraController = CameraController(
+      cameraDescription,
+      ResolutionPreset.high,
+      imageFormatGroup: ImageFormatGroup.jpeg,
+    );
 
-  final resolutionPresets = ResolutionPreset.values;
+    // Dispose the previous controller
+    await previousCameraController?.dispose();
+    cameraController
+        .getMaxZoomLevel()
+        .then((value) => _maxAvailableZoom = value);
 
-  ResolutionPreset currentResolutionPreset = ResolutionPreset.high;
-  refreshAlreadyCapturedImages() async {
-    final directory = await getApplicationDocumentsDirectory();
-    List<FileSystemEntity> fileList = await directory.list().toList();
-    allFileList.clear();
-    List<Map<int, dynamic>> fileNames = [];
+    cameraController
+        .getMinZoomLevel()
+        .then((value) => _minAvailableZoom = value);
+    // Replace with the new controller
+    if (mounted) {
+      setState(() {
+        controller = cameraController;
+      });
+    }
 
-    fileList.forEach((file) {
-      if (file.path.contains('.jpg') || file.path.contains('.mp4')) {
-        allFileList.add(File(file.path));
-
-        String name = file.path.split('/').last.split('.').first;
-        fileNames.add({0: int.parse(name), 1: file.path.split('/').last});
-      }
+    // Update UI if controller updated
+    cameraController.addListener(() {
+      if (mounted) setState(() {});
     });
 
-    if (fileNames.isNotEmpty) {
-      final recentFile =
-          fileNames.reduce((curr, next) => curr[0] > next[0] ? curr : next);
-      String recentFileName = recentFile[1];
-      if (recentFileName.contains('.mp4')) {
-        _videoFile = File('${directory.path}/$recentFileName');
-        _imageFile = null;
-        _startVideoPlayer();
-      } else {
-        _imageFile = File('${directory.path}/$recentFileName');
-        _videoFile = null;
-      }
-
-      setState(() {});
-    }
-  }
-
-  Future<XFile?> takePicture() async {
-    final CameraController? cameraController = controller;
-
-    if (cameraController!.value.isTakingPicture) {
-      // A capture is already pending, do nothing.
-      return null;
-    }
-
+    // Initialize controller
     try {
-      XFile file = await cameraController.takePicture();
-      return file;
+      await cameraController.initialize();
     } on CameraException catch (e) {
-      print('Error occured while taking picture: $e');
-      return null;
-    }
-  }
-
-  Future<void> _startVideoPlayer() async {
-    if (_videoFile != null) {
-      videoController = VideoPlayerController.file(_videoFile!);
-      await videoController!.initialize().then((_) {
-        // Ensure the first frame is shown after the video is initialized,
-        // even before the play button has been pressed.
-        setState(() {});
-      });
-      await videoController!.setLooping(true);
-      await videoController!.play();
-    }
-  }
-
-  Future<void> startVideoRecording() async {
-    final CameraController? cameraController = controller;
-
-    if (controller!.value.isRecordingVideo) {
-      // A recording has already started, do nothing.
-      return;
+      print('Error initializing camera: $e');
     }
 
-    try {
-      await cameraController!.startVideoRecording();
+    // Update the Boolean
+    if (mounted) {
       setState(() {
-        _isRecordingInProgress = true;
-        print(_isRecordingInProgress);
+        _isCameraInitialized = controller!.value.isInitialized;
       });
-    } on CameraException catch (e) {
-      print('Error starting to record video: $e');
     }
   }
 
-  Future<XFile?> stopVideoRecording() async {
-    if (!controller!.value.isRecordingVideo) {
-      // Recording is already is stopped state
-      return null;
-    }
+  @override
+  void initState() {
+    super.initState();
+    initWidgets();
+    onNewCameraSelected(cameras[0]);
+    SystemChrome.setEnabledSystemUIOverlays([]);
 
-    try {
-      XFile file = await controller!.stopVideoRecording();
-      setState(() {
-        _isRecordingInProgress = false;
-      });
-      return file;
-    } on CameraException catch (e) {
-      print('Error stopping video recording: $e');
-      return null;
-    }
+    onNewCameraSelected(cameras[0]);
   }
 
-  Future<void> pauseVideoRecording() async {
-    if (!controller!.value.isRecordingVideo) {
-      // Video recording is not in progress
-      return;
-    }
-
-    try {
-      await controller!.pauseVideoRecording();
-    } on CameraException catch (e) {
-      print('Error pausing video recording: $e');
-    }
+  @override
+  void dispose() {
+    controller?.dispose();
+    super.dispose();
   }
 
-  Future<void> resumeVideoRecording() async {
-    if (!controller!.value.isRecordingVideo) {
-      // No video recording was in progress
-      return;
-    }
-
+  initWidgets() async {
     try {
-      await controller!.resumeVideoRecording();
+      WidgetsFlutterBinding.ensureInitialized();
+      cameras = await availableCameras();
     } on CameraException catch (e) {
-      print('Error resuming video recording: $e');
+      print('Error in fetching the cameras: $e');
     }
   }
 
@@ -178,14 +106,83 @@ class _CameraScreenState extends State<CameraScreen>
     }
 
     if (state == AppLifecycleState.inactive) {
+      // Free up memory when camera not active
       cameraController.dispose();
     } else if (state == AppLifecycleState.resumed) {
-      //onNewCameraSelected(cameraController.description);
+      // Reinitialize the camera with same properties
+      onNewCameraSelected(cameraController.description);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container();
+    return Scaffold(
+      body: _isCameraInitialized
+          ? AspectRatio(
+              aspectRatio: 1 / controller!.value.aspectRatio,
+              child: controller!.buildPreview(),
+            )
+          : Column(
+              children: [
+                Container(
+                  child: DropdownButton<ResolutionPreset>(
+                    dropdownColor: Colors.black87,
+                    underline: Container(),
+                    value: currentResolutionPreset,
+                    items: [
+                      for (ResolutionPreset preset in resolutionPresets)
+                        DropdownMenuItem(
+                          child: Text(
+                            preset.toString().split('.')[1].toUpperCase(),
+                            style: TextStyle(color: Colors.white),
+                          ),
+                          value: preset,
+                        )
+                    ],
+                    onChanged: (value) {
+                      setState(() {
+                        currentResolutionPreset = value!;
+                        _isCameraInitialized = false;
+                      });
+                      onNewCameraSelected(controller!.description);
+                    },
+                    hint: Text("Select item"),
+                  ),
+                ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Slider(
+                        value: _currentZoomLevel,
+                        min: _minAvailableZoom,
+                        max: _maxAvailableZoom,
+                        activeColor: Colors.white,
+                        inactiveColor: Colors.white30,
+                        onChanged: (value) async {
+                          setState(() {
+                            _currentZoomLevel = value;
+                          });
+                          await controller!.setZoomLevel(value);
+                        },
+                      ),
+                    ),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.black87,
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                          _currentZoomLevel.toStringAsFixed(1) + 'x',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ],
+                )
+              ],
+            ),
+    );
   }
 }

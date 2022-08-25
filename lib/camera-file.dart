@@ -28,7 +28,7 @@ class TakePictureScreenState extends State<TakePictureScreen> {
   late CameraController _controller;
   late Future<void> _initializeControllerFuture;
   late ResolutionPreset resl;
-
+  double scale = 1.0;
   // ignore: non_constant_identifier_names
 
   getLocation() async {
@@ -59,7 +59,12 @@ class TakePictureScreenState extends State<TakePictureScreen> {
       widget.camera,
       resl,
     );
-    _initializeControllerFuture = _controller.initialize();
+    _initializeControllerFuture = _controller.initialize().then((_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {});
+    });
     getLocation();
   }
 
@@ -80,6 +85,7 @@ class TakePictureScreenState extends State<TakePictureScreen> {
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.done) {
                 // If the Future is complete, display the preview.
+
                 return CameraPreview(_controller);
               } else {
                 // Otherwise, display a loading indicatos.
