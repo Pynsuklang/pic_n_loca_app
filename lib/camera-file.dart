@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:connectivity/connectivity.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
@@ -29,6 +30,8 @@ class TakePictureScreenState extends State<TakePictureScreen> {
   late Future<void> _initializeControllerFuture;
   late ResolutionPreset resl;
   double scale = 1.0;
+  var loctn1 = "";
+  var loctn2 = "";
   // ignore: non_constant_identifier_names
 
   getLocation() async {
@@ -47,7 +50,25 @@ class TakePictureScreenState extends State<TakePictureScreen> {
         loctn2 = position.longitude.toString();
       });
     }
+    Map<String, String> location_data = {
+      'latitude': loctn1,
+      'longitude': loctn2,
+    };
     print("latitude is $loctn1 and longitude is $loctn2");
+    return location_data;
+  }
+
+  Future<bool> checkInternet() async {
+    bool conn;
+    var connectivityResult = await (Connectivity().checkConnectivity());
+    if (connectivityResult == ConnectivityResult.mobile) {
+      conn = true;
+    } else if (connectivityResult == ConnectivityResult.wifi) {
+      conn = true;
+    } else {
+      conn = false;
+    }
+    return conn;
   }
 
   @override
@@ -65,7 +86,6 @@ class TakePictureScreenState extends State<TakePictureScreen> {
       }
       setState(() {});
     });
-    getLocation();
   }
 
   @override
@@ -109,23 +129,34 @@ class TakePictureScreenState extends State<TakePictureScreen> {
                 // Provide an onPressed callback.
                 onPressed: () async {
                   try {
-                    await _initializeControllerFuture;
-                    final image = await _controller.takePicture();
-                    await GallerySaver.saveImage(image.path, toDcim: true);
-                    // var dir = getStorageDirectory().then((dirx) {
-                    //   return dirx;
-                    // });
+                    var chkInternet = await checkInternet().then((conn2) {
+                      return conn2;
+                    });
+                    if (chkInternet == true) {
+                      await _initializeControllerFuture;
+                      final image = await _controller.takePicture();
+                      Map<String, String> locationdata =
+                          await getLocation().then((locdata) {
+                        return locdata;
+                      });
+                      String clickdatetime = DateTime.now().toString();
 
-                    // print("dir is $dir");
-                    await Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => ImagePreview(
-                          imagePath: image.path,
-                          latitd: loctn1,
-                          longitd: loctn2,
+                      await Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => ImagePreview(
+                            imagePath: image.path,
+                            latitd: locationdata["latitude"],
+                            longitd: locationdata["longitude"],
+                            clickedDateTime: clickdatetime,
+                          ),
                         ),
-                      ),
-                    );
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                          content:
+                              Text('No internet connection at the moment')));
+                      //trigger submit later
+                    }
                   } catch (e) {
                     // If an error occurs, log the error to the console.
                     print(e);
@@ -146,3 +177,13 @@ class TakePictureScreenState extends State<TakePictureScreen> {
 }
 
 // A widget that displays the picture taken by the user.
+                      // await GallerySaver.saveImage(image.path, toDcim: true);
+                      // var counter = 5;
+                      // Timer.periodic(const Duration(seconds: 2), (timer) {
+                      //   print(timer.tick);
+                      //   counter--;
+                      //   if (counter == 0) {
+                      //     print('Cancel timer');
+                      //     timer.cancel();
+                      //   }
+                      // });

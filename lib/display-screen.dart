@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:connectivity/connectivity.dart';
 import 'package:geolocator/geolocator.dart';
@@ -6,42 +7,27 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:pic_n_loca_app/main.dart';
+import 'package:flutter_background_service/flutter_background_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ImagePreview extends StatefulWidget {
   var imagePath;
   var latitd;
   var longitd;
-  ImagePreview({this.imagePath, this.latitd, this.longitd});
+  var clickedDateTime;
+  ImagePreview(
+      {this.imagePath, this.latitd, this.longitd, this.clickedDateTime});
 
   @override
   State<ImagePreview> createState() => _ImagePreviewState();
 }
 
 class _ImagePreviewState extends State<ImagePreview> {
-  getLocation() async {
-    LocationPermission permission;
-    permission = await Geolocator.checkPermission();
-    print("permission is $permission");
-    permission = await Geolocator.requestPermission();
-    if (permission == LocationPermission.denied) {
-      //nothing
-      openAppSettings();
-    } else {
-      Position position = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.high);
-      setState(() {
-        loctn1 = position.latitude.toString();
-        loctn2 = position.longitude.toString();
-      });
-    }
-    print("latitude is $loctn1 and longitude is $loctn2");
-  }
-
+  var uploadTime;
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
-    getLocation();
   }
 
   Future<bool> checkInternet() async {
@@ -62,13 +48,12 @@ class _ImagePreviewState extends State<ImagePreview> {
     var lat = widget.latitd;
     var longt = widget.longitd;
     var imgpth = widget.imagePath;
+    var clicktime = widget.clickedDateTime;
 
-    SendData(dynamic latit2, dynamic longit2, dynamic imgpth2) async {
+    SendData(dynamic latit2, dynamic longit2, dynamic imgpth2,
+        dynamic clicktime, dynamic uploaddatetime) async {
       late var response;
       late var responseDecode;
-      print("latitude is $latit2");
-      print("longitude is $longit2");
-      print("image path is $imgpth2");
       try {
         var chkInternet = await checkInternet().then((conn2) {
           return conn2;
@@ -79,22 +64,22 @@ class _ImagePreviewState extends State<ImagePreview> {
           Map<String, String> headers = {
             'Content-Type': 'multipart/form-data',
           };
+          String uploadtime = DateTime.now().toString();
           Map<String, String> data = {
             'latitude': latit2,
             'longitude': longit2,
-            'emailid': glbusrname
+            'emailid': glbusrname,
+            'uploadtime': uploaddatetime,
+            'clickedtime': clicktime
           };
-          //final body = json.encode(data);
+
           var request = http.MultipartRequest('POST', url)
             ..fields.addAll(data)
             ..headers.addAll(headers)
             ..files.add(await http.MultipartFile.fromPath('image', imgpth2));
           var response = await request.send();
-          ////
-
           final respStr = await response.stream.bytesToString();
           print("response from api is $respStr");
-          //encode Map to JSON
           responseDecode = respStr;
           return responseDecode;
         } else {
@@ -108,6 +93,28 @@ class _ImagePreviewState extends State<ImagePreview> {
       }
     }
 
+    sendtoprotected(dynamic latit2, dynamic longit2, dynamic imgpth2,
+        dynamic clickdatetimebk, dynamic uploaddatetimebk) async {
+      try {
+        Map<String, String> datatosend = {
+          'latitude': latit2,
+          'longitude': longit2,
+          'emailid': glbusrname,
+          'uploadtime': uploaddatetimebk,
+          'clickedtime': clickdatetimebk
+        };
+        var datas = jsonEncode(datatosend);
+        dynamic reservedata = await SharedPreferences.getInstance();
+        reservedata.setString("resvdata", datas);
+
+        String encodedMap = reservedata.getString('resvdata');
+        Map<String, dynamic> decodedMap = json.decode(encodedMap);
+        print(decodedMap);
+      } catch (e) {
+        print("Error is $e");
+      }
+    }
+
     var body = Container(
       child: Column(children: [
         Image.file(File(imgpth)),
@@ -115,35 +122,44 @@ class _ImagePreviewState extends State<ImagePreview> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             FloatingActionButton(
-              // Provide an onPressed callback.
               onPressed: () async {
+                String uploaddatetime = DateTime.now().toString();
                 var chkInternet = await checkInternet().then((conn2) {
                   print("conn2 is $conn2");
                   return conn2;
                 });
 
                 try {
-                  //SendData(lat, longt, imgpth);
-                  var sig = await SendData(lat, longt, imgpth).then((vals) {
-                    print("vals is $vals");
+                  final imgToSend = imgpth;
+                  //"/data/user/0/com.example.pic_n_loca_app/cache/CAP422041405340159134.jpg";
+                  var sig = await SendData(
+                          lat, longt, imgToSend, clicktime, uploaddatetime)
+                      .then((vals) {
                     return vals;
                   });
-                  print("sig is $sig");
-                  print(sig.toString());
                   if (sig == '1') {
                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                         content:
                             Text('Data is submitted and saved successfully')));
+                  } else if (sig == '5') {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                        content: Text(
+                            'This file is already uploaded. Please upload another file')));
+                  } else if (sig == '6') {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Please click again')));
                   } else if (sig == 'ni') {
                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                         content: Text(
                             'Internet Not Available. File will be uploaded on immidiate availability of internet!!!')));
+                    //send to protected
+                    sendtoprotected(
+                        lat, longt, imgToSend, clicktime, uploaddatetime);
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('ERROR!!!')));
                   }
                 } catch (e) {
-                  // If an error occurs, log the error to the console.
                   print(e);
                 }
               },
@@ -152,7 +168,6 @@ class _ImagePreviewState extends State<ImagePreview> {
           ],
         ),
         Container(
-          //padding: const EdgeInsets.fromLTRB(10, 10, 20, 0),
           child: Text("Upload"),
         ),
       ]),
@@ -160,8 +175,6 @@ class _ImagePreviewState extends State<ImagePreview> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Display the Picture')),
-      // The image is stored as a file on the device. Use the `Image.file`
-      // constructor with the given path to display the image.
       body: body,
     );
   }

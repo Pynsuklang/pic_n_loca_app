@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:camera/camera.dart';
@@ -44,25 +45,6 @@ class _MyDashboardState extends State<MyDashboard> {
     cameras = await availableCameras();
   }
 
-  getLocation() async {
-    LocationPermission permission;
-    permission = await Geolocator.checkPermission();
-    print("permission is $permission");
-    permission = await Geolocator.requestPermission();
-    if (permission == LocationPermission.denied) {
-      //nothing
-      openAppSettings();
-    } else {
-      Position position = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.high);
-      setState(() {
-        loctn1 = position.latitude.toString();
-        loctn2 = position.longitude.toString();
-      });
-    }
-    print("latitude is $loctn1 and longitude is $loctn2");
-  }
-
   void check_if_already_login() async {
     logindata = await SharedPreferences.getInstance();
     newuser = (logindata.getBool('login') ?? true);
@@ -87,7 +69,7 @@ class _MyDashboardState extends State<MyDashboard> {
     check_if_already_login();
     initial();
     initwidgets();
-    getLocation();
+    //getLocation();
   }
 
   void initial() async {

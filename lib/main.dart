@@ -12,8 +12,6 @@ import 'package:http/http.dart' as http;
 
 void main() => runApp(MyApp());
 var glbusrname;
-var loctn1 = "";
-var loctn2 = "";
 
 class MyApp extends StatelessWidget {
   // This widget is the root of your application.
@@ -108,7 +106,6 @@ class _LoginFormState extends State<LoginForm> {
   dynamic resp;
 
   postRequest(dynamic usnm, dynamic pwd) async {
-    print("hhh");
     var response;
     var responseDecode;
     try {
@@ -208,7 +205,6 @@ class _LoginFormState extends State<LoginForm> {
               String password = passwordCtrl.text;
               if (formKey.currentState!.validate()) {
                 var chkInternet = await checkInternet().then((conn2) {
-                  print("conn2 is $conn2");
                   return conn2;
                 });
                 if (chkInternet == true) {
@@ -241,7 +237,9 @@ class _LoginFormState extends State<LoginForm> {
                             const SnackBar(content: Text('Server Error!!!')));
                       } else if (resp == 4) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Permission not yet granted by admin')));
+                            const SnackBar(
+                                content: Text(
+                                    'Permission not yet granted by admin')));
                       } else {
                         const CircularProgressIndicator();
                       }
