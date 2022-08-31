@@ -178,12 +178,3 @@ class TakePictureScreenState extends State<TakePictureScreen> {
 
 // A widget that displays the picture taken by the user.
                       // await GallerySaver.saveImage(image.path, toDcim: true);
-                      // var counter = 5;
-                      // Timer.periodic(const Duration(seconds: 2), (timer) {
-                      //   print(timer.tick);
-                      //   counter--;
-                      //   if (counter == 0) {
-                      //     print('Cancel timer');
-                      //     timer.cancel();
-                      //   }
-                      // });

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:connectivity/connectivity.dart';
@@ -24,6 +25,8 @@ class ImagePreview extends StatefulWidget {
 
 class _ImagePreviewState extends State<ImagePreview> {
   var uploadTime;
+  late Timer timer;
+  late SharedPreferences reservedata;
   @override
   void initState() {
     // TODO: implement initState
@@ -54,12 +57,12 @@ class _ImagePreviewState extends State<ImagePreview> {
         dynamic clicktime, dynamic uploaddatetime) async {
       late var response;
       late var responseDecode;
+      reservedata = await SharedPreferences.getInstance();
       try {
         var chkInternet = await checkInternet().then((conn2) {
           return conn2;
         });
         if (chkInternet == true) {
-          print("image path inside senddata is $imgpth");
           var url = Uri.parse("http://10.179.28.7:8080/api/store-data");
           Map<String, String> headers = {
             'Content-Type': 'multipart/form-data',
@@ -72,20 +75,21 @@ class _ImagePreviewState extends State<ImagePreview> {
             'uploadtime': uploaddatetime,
             'clickedtime': clicktime
           };
-
           var request = http.MultipartRequest('POST', url)
             ..fields.addAll(data)
             ..headers.addAll(headers)
             ..files.add(await http.MultipartFile.fromPath('image', imgpth2));
           var response = await request.send();
           final respStr = await response.stream.bytesToString();
-          print("response from api is $respStr");
           responseDecode = respStr;
           return responseDecode;
         } else {
           responseDecode = 'ni';
           return responseDecode;
         }
+      } on SocketException catch (_) {
+        responseDecode = 'scex';
+        return responseDecode;
       } catch (e) {
         print("error is $e");
         responseDecode = 'e';
@@ -96,22 +100,98 @@ class _ImagePreviewState extends State<ImagePreview> {
     sendtoprotected(dynamic latit2, dynamic longit2, dynamic imgpth2,
         dynamic clickdatetimebk, dynamic uploaddatetimebk) async {
       try {
-        Map<String, String> datatosend = {
+        Map<String, String> data = {
           'latitude': latit2,
           'longitude': longit2,
           'emailid': glbusrname,
           'uploadtime': uploaddatetimebk,
-          'clickedtime': clickdatetimebk
+          'clickedtime': clickdatetimebk,
+          'imgpth2': imgpth2,
         };
-        var datas = jsonEncode(datatosend);
-        dynamic reservedata = await SharedPreferences.getInstance();
-        reservedata.setString("resvdata", datas);
-
-        String encodedMap = reservedata.getString('resvdata');
-        Map<String, dynamic> decodedMap = json.decode(encodedMap);
-        print(decodedMap);
+        // reservedata = await SharedPreferences.getInstance();
+        // reservedata.setString("reservedatalist", data.toString());
+        String encodedMap = json.encode(data);
+        reservedata.setString('reservedatalist', encodedMap);
+        print("DATA STORED IN SESSION");
       } catch (e) {
         print("Error is $e");
+      }
+    }
+
+    serverPing() async {
+      var responseto;
+      try {
+        var chkInternet = await checkInternet().then((conn2) {
+          return conn2;
+        });
+        if (chkInternet == true) {
+          var url = Uri.parse("http://10.179.28.7:8080/api/check-connectivity");
+
+          var response = await http
+              .post(url, headers: {"Content-Type": "application/json"});
+          var responseDecode = json.decode(response.body);
+          // ignore: unrelated_type_equality_checks
+          if (responseDecode == 1) {
+            return true;
+          } else {
+            return false;
+          }
+        } else {
+          return false;
+        }
+      } on SocketException catch (_) {
+        return false;
+      } catch (e) {
+        print("Error is $e");
+        return false;
+        // everything else
+      }
+    }
+
+    sendafterinternetavail() async {
+      late var response;
+      late var responseDecode;
+      try {
+        var chkInternet = await checkInternet().then((conn2) {
+          return conn2;
+        });
+        if (chkInternet == true) {
+          Map<String, dynamic> decodedMap =
+              json.decode(reservedata.getString('reservedatalist')!);
+          print("decoded map is\n");
+          print(decodedMap);
+          //
+          Map<String, dynamic> queryParameters = {"id": 3};
+          Map<String, String> stringQueryParameters =
+              decodedMap.map((key, value) => MapEntry(key, value.toString()));
+          print("stringQueryParameters is $stringQueryParameters");
+          // print(decodedMap["latit2"]);
+          // print(decodedMap['longit2']);
+          // print(decodedMap['glbusrname']);
+          // print("clickdatetimebk is ${decodedMap['clickdatetimebk']} \n");
+          // print("imgpth2 is ${decodedMap['imgpth2']}");
+
+          var url = Uri.parse("http://10.179.28.7:8080/api/store-data");
+          Map<String, String> headers = {
+            'Content-Type': 'multipart/form-data',
+          };
+          String uploadtime = DateTime.now().toString();
+
+          var request = http.MultipartRequest('POST', url)
+            ..fields.addAll(stringQueryParameters)
+            ..headers.addAll(headers)
+            ..files.add(await http.MultipartFile.fromPath(
+                'image', decodedMap['imgpth2']));
+          var response = await request.send();
+          final respStr = await response.stream.bytesToString();
+          print("respStr from save-data is $respStr");
+
+          return true;
+        } else {}
+      } catch (e) {
+        print("error in sendafterinternetavail() is $e");
+        responseDecode = 'e';
+        return true;
       }
     }
 
@@ -137,6 +217,7 @@ class _ImagePreviewState extends State<ImagePreview> {
                       .then((vals) {
                     return vals;
                   });
+
                   if (sig == '1') {
                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                         content:
@@ -148,6 +229,9 @@ class _ImagePreviewState extends State<ImagePreview> {
                   } else if (sig == '6') {
                     ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Please click again')));
+                  } else if (sig == 'scex') {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Server Unreacheable')));
                   } else if (sig == 'ni') {
                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                         content: Text(
@@ -155,12 +239,30 @@ class _ImagePreviewState extends State<ImagePreview> {
                     //send to protected
                     sendtoprotected(
                         lat, longt, imgToSend, clicktime, uploaddatetime);
+
+                    var counter = 20;
+                    Timer.periodic(const Duration(seconds: 2), (timer) {
+                      print("timer started");
+                      serverPing().then((conn2) async {
+                        print("response from serverPing() is $conn2");
+                        if (conn2 == true) {
+                          var responseavail =
+                              await sendafterinternetavail().then((conn2) {
+                            return conn2;
+                          });
+                          if (responseavail == true) {
+                            timer.cancel();
+                            print('Cancel timer');
+                          }
+                        }
+                      });
+                    });
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('ERROR!!!')));
                   }
                 } catch (e) {
-                  print(e);
+                  print("Error is $e");
                 }
               },
               child: const Icon(Icons.upload_file),
