@@ -61,7 +61,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Shared Preferences"),
+        title: const Text("Forgot Password"),
         automaticallyImplyLeading: false,
       ),
       body: Center(

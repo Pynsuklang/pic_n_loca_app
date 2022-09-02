@@ -136,18 +136,18 @@ class _MyDashboardState extends State<MyDashboard> {
                       child: const Icon(Icons.camera_alt),
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.fromLTRB(50, 350, 10, 0),
-                    child: FloatingActionButton(
-                      onPressed: () async {
-                        final images = await ImagePicker()
-                            .pickImage(source: ImageSource.gallery);
-                        print("image is $images");
-                      },
-                      //tooltip: tkn != "" ? 'Take Picture' : 'take pics',
-                      child: const Icon(Icons.folder),
-                    ),
-                  )
+                  // Container(
+                  //   padding: const EdgeInsets.fromLTRB(50, 350, 10, 0),
+                  //   child: FloatingActionButton(
+                  //     onPressed: () async {
+                  //       final images = await ImagePicker()
+                  //           .pickImage(source: ImageSource.gallery);
+                  //       print("image is $images");
+                  //     },
+                  //     //tooltip: tkn != "" ? 'Take Picture' : 'take pics',
+                  //     child: const Icon(Icons.folder),
+                  //   ),
+                  // )
                 ],
               ),
               Row(
@@ -157,10 +157,10 @@ class _MyDashboardState extends State<MyDashboard> {
                     padding: const EdgeInsets.fromLTRB(10, 10, 20, 0),
                     child: const Text("Take snapshot"),
                   ),
-                  Container(
-                    padding: const EdgeInsets.fromLTRB(10, 10, 20, 0),
-                    child: const Text("Choose picture"),
-                  )
+                  // Container(
+                  //   padding: const EdgeInsets.fromLTRB(10, 10, 20, 0),
+                  //   child: const Text("Choose picture"),
+                  // )
                 ],
               )
             ],

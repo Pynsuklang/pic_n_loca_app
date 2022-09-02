@@ -52,7 +52,7 @@ class _MyLoginPageState extends State<MyLoginPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Shared Preferences"),
+        title: const Text("Login"),
         automaticallyImplyLeading: false,
       ),
       body: Center(
@@ -60,17 +60,17 @@ class _MyLoginPageState extends State<MyLoginPage> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
             const LoginForm(),
-            TextButton(
-              onPressed: () {
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const ForgotPwdPg()));
-              },
-              child: const Text(
-                'Forgot Password',
-              ),
-            ),
+            // TextButton(
+            //   onPressed: () {
+            //     Navigator.push(
+            //         context,
+            //         MaterialPageRoute(
+            //             builder: (context) => const ForgotPwdPg()));
+            //   },
+            //   child: const Text(
+            //     'Forgot Password',
+            //   ),
+            // ),
             TextButton(
               onPressed: () {
                 Navigator.push(

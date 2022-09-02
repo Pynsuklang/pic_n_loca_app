@@ -48,7 +48,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Shared Preferences"),
+        title: const Text("Create Account"),
         automaticallyImplyLeading: false,
       ),
       body: Center(

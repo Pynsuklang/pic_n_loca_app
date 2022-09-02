@@ -161,16 +161,8 @@ class _ImagePreviewState extends State<ImagePreview> {
           print("decoded map is\n");
           print(decodedMap);
           //
-          Map<String, dynamic> queryParameters = {"id": 3};
           Map<String, String> stringQueryParameters =
               decodedMap.map((key, value) => MapEntry(key, value.toString()));
-          print("stringQueryParameters is $stringQueryParameters");
-          // print(decodedMap["latit2"]);
-          // print(decodedMap['longit2']);
-          // print(decodedMap['glbusrname']);
-          // print("clickdatetimebk is ${decodedMap['clickdatetimebk']} \n");
-          // print("imgpth2 is ${decodedMap['imgpth2']}");
-
           var url = Uri.parse("http://10.179.28.7:8080/api/store-data");
           Map<String, String> headers = {
             'Content-Type': 'multipart/form-data',
