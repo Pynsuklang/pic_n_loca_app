@@ -156,6 +156,8 @@ class _CreateAccountFormState extends State<CreateAccountForm> {
                   ),
                   validator: (val) {
                     if (val!.isEmpty) return 'This field cannot be empty';
+                    if (val.isEmpty || !val.contains("@"))
+                      return 'This field must contain email id';
                     return null;
                   }),
             ),
@@ -214,6 +216,10 @@ class _CreateAccountFormState extends State<CreateAccountForm> {
                               const SnackBar(
                                   content: Text('Account Already Existed')));
                         } else if (resp == 0) {
+                          username_controller.clear();
+                          _pass.clear();
+                          name_controller.clear();
+                          _confirmpass.clear();
                           ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                   content:

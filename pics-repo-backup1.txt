@@ -1,0 +1,99 @@
+import 'dart:io';
+
+import 'package:flutter/material.dart';
+
+class PhotoItem {
+  final String image;
+  final String name;
+  PhotoItem(this.image, this.name);
+}
+
+late var imgglb;
+
+class RouteOne extends StatelessWidget {
+  final List<PhotoItem> i_items;
+
+  RouteOne({Key? key, required this.i_items});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Screen one ☝️'),
+      ),
+      body: GridView.builder(
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisSpacing: 0,
+          mainAxisSpacing: 0,
+          crossAxisCount: 3,
+        ),
+        itemCount: i_items.length,
+        itemBuilder: (context, index) {
+          // ignore: unnecessary_new
+          return new GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => RouteTwo(
+                      image: i_items[index].image, name: i_items[index].name),
+                ),
+              );
+            },
+            child: Image.file(File(i_items[index].image)),
+            // Container(
+            //   child:Image.file(File(image))
+            //   decoration: BoxDecoration(
+            //     image: DecorationImage(
+            //       fit: BoxFit.cover,
+            //       image: ,
+            //     ),
+            //   ),
+            // ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class RouteTwo extends StatelessWidget {
+  final String image;
+  final String name;
+
+  RouteTwo({Key? key, required this.image, required this.name})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Screen two ✌️'),
+      ),
+      body: Column(
+        children: [
+          //Image.file(File("")),
+          AspectRatio(
+            aspectRatio: 1,
+            child: Container(
+              width: double.infinity,
+              child: Image.file(File(image)),
+              // Image(
+              //   image: NetworkImage(image),
+              // ),
+            ),
+          ),
+          Container(
+            margin: const EdgeInsets.all(20.0),
+            child: Center(
+              child: Text(
+                name,
+                style: TextStyle(fontSize: 40),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

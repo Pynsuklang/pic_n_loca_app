@@ -6,12 +6,19 @@ import 'package:connectivity/connectivity.dart';
 import 'package:flutter/material.dart';
 import 'package:pic_n_loca_app/create_account.dart';
 import 'package:pic_n_loca_app/forgot-pwd.dart';
+import 'package:pic_n_loca_app/upload-all-pics.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'homepage.dart';
+
+
 import 'package:http/http.dart' as http;
 
 void main() => runApp(MyApp());
 var glbusrname;
+late SharedPreferences cntr;
+String username = "";
+List<dynamic> tosend = [];
+late SharedPreferences tableAvl;
 
 class MyApp extends StatelessWidget {
   // This widget is the root of your application.
@@ -166,6 +173,7 @@ class _LoginFormState extends State<LoginForm> {
 
   @override
   Widget build(BuildContext context) {
+    bool isLoading = false;
     return Form(
       key: formKey,
       child: Column(
@@ -201,50 +209,75 @@ class _LoginFormState extends State<LoginForm> {
             textColor: Colors.white,
             color: Colors.blue,
             onPressed: () async {
-              String username = usernameCtrl.text;
+              username = usernameCtrl.text;
               String password = passwordCtrl.text;
               if (formKey.currentState!.validate()) {
                 var chkInternet = await checkInternet().then((conn2) {
                   return conn2;
                 });
                 if (chkInternet == true) {
-                  postRequest(username, password).then((vals) {
-                    setState(() {
-                      print("vals is $vals");
-                      resp = vals;
-                      print("resp is $resp");
-                      if (resp == 0) {
-                        glbusrname = username;
-                        ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content: Text('Login Successfull!!!')));
-                        logindata.setBool('login', false);
-                        logindata.setString('username', username);
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => MyDashboard()));
-                      } else if (resp == 1) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content: Text('Unauthorised Credentials!!!')));
-                      } else if (resp == 2) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content: Text('Server Unreachable!!!')));
-                      } else if (resp == 3 || resp == null) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Server Error!!!')));
-                      } else if (resp == 4) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content: Text(
-                                    'Permission not yet granted by admin')));
-                      } else {
-                        const CircularProgressIndicator();
-                      }
-                    });
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      duration: const Duration(minutes: 10),
+                      content: Row(
+                        children: const [
+                          CircularProgressIndicator(),
+                          Text('Please wait...')
+                        ],
+                      )));
+                  var permisn = await initgetLocation().then((permis) {
+                    return permis;
                   });
+                  print("permisn is $permisn");
+                  if (permisn == '1') {
+                    postRequest(username, password).then((vals) {
+                      setState(() async {
+                        print("vals is $vals");
+                        resp = vals;
+                        print("resp is $resp");
+                        if (resp == 0) {
+                          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                          glbusrname = username;
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                              content: Text(
+                                  'Login Successfull!. Please donot disable the location of this device while using this app')));
+                          logindata.setBool('login', false);
+                          logindata.setString('username', username);
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => const MyDashboard()));
+                        } else if (resp == 1) {
+                          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content:
+                                      Text('Unauthorised Credentials!!!')));
+                        } else if (resp == 2) {
+                          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content: Text('Server Unreachable!!!')));
+                        } else if (resp == 3 || resp == null) {
+                          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Server Error!!!')));
+                        } else if (resp == 4) {
+                          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content: Text(
+                                      'Permission not yet granted by admin')));
+                        } else {
+                          print("don problem 2");
+                        }
+                      });
+                    });
+                  } else if (permisn == '-1') {
+                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                        content: Text(
+                            'Please set location permission for this app to "Always" or "WhileInUse"')));
+                  }
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                       content: Text('Internet Not Available!!!')));
