@@ -69,126 +69,138 @@ Future<bool> checkInternet() async {
   return conn;
 }
 
-UploadAllData(dynamic sendtype) async {
-  var reqdatas = await SharedPreferences.getInstance();
-  cntr = await SharedPreferences.getInstance();
-
-  int? itemcount = cntr.getInt("cntrkey");
-  if (itemcount != null) {
-    itemcount = itemcount;
-
-    sendings["itemcount"] = itemcount.toString();
-    for (var i = 1; i <= itemcount; i++) {
-      if (reqdatas.containsKey("reservedatalist$i")) {
-        var rawdatas = reqdatas.getString("reservedatalist$i");
-        var decoded = jsonDecode(rawdatas!);
-        latitudes.add(decoded["latitude"]);
-        longitudes.add(decoded["longitude"]);
-        imageBytes.add(decoded["imageByte"]);
-        clickedtimes.add(decoded["clickedDateTime"]);
-      }
-    }
-    String uploadtime = DateTime.now().toString();
-    mymaps = {
-      "emailid": glbusrname,
-      "uploadtime": uploadtime,
-      "clickedtime": jsonEncode(clickedtimes),
-      "latitude": jsonEncode(latitudes),
-      "longitude": jsonEncode(longitudes),
-      "imageByte": jsonEncode(imageBytes),
-    };
-    if (mymaps.isEmpty) {
-      responseDecode = '-1';
-      return responseDecode;
-    } else {
-      try {
-        var chkInternet = await checkInternet().then((conn2) {
-          return conn2;
-        });
-        if (chkInternet == true) {
-          if (sendtype == 0) {
-            var url = Uri.parse(
-                "http://10.179.28.7:8080/api/store-datas-afternet-avl");
-
-            Map<String, String> myheaders = {
-              'Content-Type': 'application/json',
-            };
-
-            final http.Response response = await http.post(
-              url,
-              body: jsonEncode(mymaps),
-              headers: myheaders,
-            );
-            responseDecode = response.body;
-            print("response.body IS ${response.body}");
-            if (response.body == '1') {
-              cntr.setInt("cntrkey", 0);
-              var cnty = cntr.getInt("cntrkey");
-              print("after response from api cntrkey is now $cnty");
-              mymaps.clear();
-              await reqdatas.clear();
-              datalistmap = await SharedPreferences.getInstance();
-              await datalistmap.clear();
-              logindata.setBool('login', false);
-              logindata.setString('username', glbusrname);
-            }
-          } else {
-            var url = Uri.parse("http://10.179.28.7:8080/api/store-datas");
-
-            Map<String, String> myheaders = {
-              'Content-Type': 'application/json',
-            };
-
-            final http.Response response = await http.post(
-              url,
-              body: jsonEncode(mymaps),
-              headers: myheaders,
-            );
-            responseDecode = response.body;
-            print("response.body IS ${response.body}");
-            if (response.body == '1') {
-              cntr.setInt("cntrkey", 0);
-              var cnty = cntr.getInt("cntrkey");
-              print("after response from api cntrkey is now $cnty");
-              mymaps.clear();
-
-              await reqdatas.clear();
-              datalistmap = await SharedPreferences.getInstance();
-              await datalistmap.clear();
-              logindata.setBool('login', false);
-              logindata.setString('username', glbusrname);
-            }
-          }
-        } else {
-          responseDecode = 'ni';
-        }
-
-        return responseDecode;
-      } on SocketException catch (_) {
-        responseDecode = 'scex';
-        return responseDecode;
-      } catch (e) {
-        print("error inside UploadAllData() is $e");
-        responseDecode = 'e';
-        return responseDecode;
-      }
-    }
-  } else {
-    print("\n No datas available \n");
-
-    responseDecode = 'na';
-    return responseDecode;
-  }
-}
-
-serverPing2() async {
-  var responseto;
+// ignore: non_constant_identifier_names
+UploadAllData() async {
+  ////
   try {
     var chkInternet = await checkInternet().then((conn2) {
       return conn2;
     });
     if (chkInternet == true) {
-      var url = Uri.parse("http://10.179.28.7:8080/api/check-connectivity");
+      try {
+        var url = Uri.parse("http://10.179.28.22:8081/api/check-connectivity");
+
+        var response =
+            await http.post(url, headers: {"Content-Type": "application/json"});
+
+        var responseDecode = json.decode(response.body);
+
+        if (responseDecode == 1) {
+          var reqdatas = await SharedPreferences.getInstance();
+          cntr = await SharedPreferences.getInstance();
+
+          int? itemcount = cntr.getInt("cntrkey");
+          if (itemcount != null) {
+            itemcount = itemcount;
+            datalistmap = await SharedPreferences.getInstance();
+            for (var i = 1; i <= itemcount; i++) {
+              if (datalistmap.containsKey("reservedatalist$i")) {
+                var rawdatas = datalistmap.getString("reservedatalist$i");
+                var decoded = jsonDecode(rawdatas!);
+                latitudes.add(decoded["latitude"]);
+                longitudes.add(decoded["longitude"]);
+                imageBytes.add(decoded["imageByte"]);
+                clickedtimes.add(decoded["clickedDateTime"]);
+                print("\n image$itemcount is\n");
+                var j = i - 1;
+                print("\n imageBytes number $j is \n ${imageBytes[j]}");
+              }
+            }
+
+            print("number of datas to send is $itemcount");
+            String uploadtime = DateTime.now().toString();
+            mymaps = {
+              "emailid": glbusrname,
+              "uploadtime": uploadtime,
+              "clickedtime": jsonEncode(clickedtimes),
+              "latitude": jsonEncode(latitudes),
+              "longitude": jsonEncode(longitudes),
+              "imageByte": jsonEncode(imageBytes),
+              "itemcount": itemcount.toString(),
+            };
+            if (mymaps.isEmpty) {
+              responseDecode = '-1';
+            } else {
+              try {
+                var chkInternet = await checkInternet().then((conn2) {
+                  return conn2;
+                });
+                if (chkInternet == true) {
+                  var url =
+                      Uri.parse("http://10.179.28.22:8081/api/store-datas");
+
+                  Map<String, String> myheaders = {
+                    'Content-Type': 'application/json',
+                  };
+
+                  final http.Response response = await http.post(
+                    url,
+                    body: jsonEncode(mymaps),
+                    headers: myheaders,
+                  );
+                  responseDecode = response.body;
+                  print("response.body IS ${response.body}");
+                  if (response.body == '1') {
+                    cntr.setInt("cntrkey", 0);
+                    var cnty = cntr.getInt("cntrkey");
+                    print("after response from api cntrkey is now $cnty");
+                    mymaps.clear();
+                    latitudes.clear();
+                    longitudes.clear();
+                    imageBytes.clear();
+                    clickedtimes.clear();
+                    await reqdatas.clear();
+                    datalistmap = await SharedPreferences.getInstance();
+                    await datalistmap.clear();
+                    logindata.setBool('login', false);
+                    logindata.setString('username', glbusrname);
+                    responseDecode = '1';
+                  }
+                } else {
+                  responseDecode = 'ni';
+                }
+
+                return responseDecode;
+              } on SocketException catch (_) {
+                responseDecode = 'scex';
+              } catch (e) {
+                print("error inside UploadAllData() is $e");
+                responseDecode = 'e';
+              }
+            }
+          } else {
+            print("\n No datas available \n");
+
+            responseDecode = 'na';
+            return responseDecode;
+          }
+        } else {}
+      } on SocketException catch (_) {
+        responseDecode = 'scex';
+      } catch (e) {
+        print("error inside UploadAllData() is $e");
+        responseDecode = 'e';
+      }
+    } else if (chkInternet == false) {
+      responseDecode = 'ni';
+    }
+    return responseDecode;
+  } catch (e) {}
+  ////
+}
+
+serverPing2() async {
+  var responseto;
+  cntr = await SharedPreferences.getInstance();
+
+  int? itemcount = cntr.getInt("cntrkey");
+  print("number of items so far $itemcount");
+  try {
+    var chkInternet = await checkInternet().then((conn2) {
+      return conn2;
+    });
+    if (chkInternet == true) {
+      var url = Uri.parse("http://10.179.28.22:8081/api/check-connectivity");
 
       var response =
           await http.post(url, headers: {"Content-Type": "application/json"});

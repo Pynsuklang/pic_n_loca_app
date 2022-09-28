@@ -22,6 +22,7 @@ import 'upload-all-pics.dart';
 bool isVisible = true;
 bool isVisible2 = true;
 late SharedPreferences datalistmap;
+dynamic reporesponse;
 
 class TakePictureScreen extends StatefulWidget {
   TakePictureScreen({
@@ -46,6 +47,8 @@ class TakePictureScreenState extends State<TakePictureScreen> {
 
   getLocation() async {
     try {
+      dynamic _countdown = 0;
+      dynamic signal = 0;
       Map<String, String> locationdata = {};
       LocationPermission permission;
 
@@ -63,23 +66,56 @@ class TakePictureScreenState extends State<TakePictureScreen> {
         return locationdata;
       } else if ((permission == LocationPermission.always) ||
           (permission == LocationPermission.whileInUse)) {
-        // print("\n ba ar \n");
-        positiony = await Geolocator.getCurrentPosition(
-            desiredAccuracy: LocationAccuracy.high);
-        setState(() {
-          loctn1 = positiony.latitude.toString();
-          loctn2 = positiony.longitude.toString();
-          locationdata = {
-            'latitude': loctn1,
-            'longitude': loctn2,
-          };
+        print("Permission allowed");
+        Timer.periodic(const Duration(seconds: 1), (timer) async {
+          _countdown = _countdown + 1;
+          print("DateTime.now().second is ${DateTime.now().second} \n");
+          print("Entered INSIDE timer");
+
+          print("positiony inside timer is $positiony \n");
+          print(
+              "positiony.latitude.toString is ${positiony?.latitude.toString} \n");
+
+          if (DateTime.now().second == 120) {
+            //Stop if second equal to 60
+            setState(() {});
+            print("Timer CANCELED when we got second equal to 120");
+            timer.cancel();
+          } else if (positiony?.latitude.toString() != "") {
+            setState(() {});
+            print("Timer CANCELED when we got value 1");
+            timer.cancel();
+          } else if (_countdown > 100) {
+            setState(() {});
+            print("Timer CANCELED when _countdown > 59");
+            timer.cancel();
+          }
+          positiony = await Geolocator.getCurrentPosition(
+              desiredAccuracy: LocationAccuracy.high);
         });
-
-        print("latitude is $loctn1 and longitude is $loctn2");
-
+        print("positiony outside timer is $positiony \n");
+        if (positiony?.latitude.toString() != "") {
+          setState(() {
+            loctn1 = positiony!.latitude.toString();
+            loctn2 = positiony!.longitude.toString();
+            locationdata = {
+              'latitude': loctn1,
+              'longitude': loctn2,
+            };
+          });
+        } else if (positiony?.latitude.toString() == null) {
+          print("XXX");
+          setState(() {
+            locationdata = {
+              'latitude': "NA",
+              'longitude': "NA",
+            };
+          });
+        }
         return locationdata;
       } else {
         print("\n ba lai \n");
+        return 'NA';
       }
     } catch (e) {
       print("\n Error inside getlocation function is $e");
@@ -133,60 +169,6 @@ class TakePictureScreenState extends State<TakePictureScreen> {
     }
   }
 
-  // ignore: non_constant_identifier_names
-  StoreDataForFuture(
-      dynamic lati, dynamic longi, dynamic pth, dynamic clktm) async {
-    try {
-      SharedPreferences cntry;
-      cntry = await SharedPreferences.getInstance();
-      dynamic cntrval = cntry.getInt("cntrkey");
-      print("cntrval in StoreDataForFuture() was $cntrval");
-
-      if (cntrval != null) {
-        cntrval = cntrval + 1;
-        cntry.setInt("cntrkey", cntrval);
-      } else {
-        cntrval = 1;
-      }
-      print("cntrval in StoreDataForFuture() after is now $cntrval");
-      cntry.setInt("cntrkey", cntrval);
-
-      File imagefile = File(pth); //convert Path to File
-      Uint8List imagebytes = await imagefile.readAsBytes(); //convert to bytes
-      String base64string =
-          base64.encode(imagebytes); //convert bytes to base64 string
-      // print(base64string);
-
-      cntry.setInt("cntrkey", cntrval);
-      String cntrstr = cntrval.toString();
-      datalistmap = await SharedPreferences.getInstance();
-      Map<String, String> storemap = {
-        'emailid': glbusrname,
-        'latitude': lati.toString(),
-        'longitude': longi.toString(),
-        'clickedDateTime': clktm.toString(),
-        'imageByte': base64string,
-      };
-
-      String encodedMap = json.encode(storemap);
-      datalistmap.setString('reservedatalist$cntrstr', json.encode(storemap));
-      return '1';
-    } catch (e) {
-      print("Error inside StoreDataForFuture() is $e");
-    }
-  }
-
-  printfuturedata() async {
-    //fix kane mo
-    try {
-      SharedPreferences cntrx = await SharedPreferences.getInstance();
-      print(cntrx.getInt("cntrkey"));
-      var reqddataDecode1 = cntrx.getString("reservedatalist4");
-    } catch (e) {
-      print("Error in printfuturedata() is $e");
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     var body = Container(
@@ -209,10 +191,14 @@ class TakePictureScreenState extends State<TakePictureScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                FloatingActionButton(
+                Expanded(
+                    child: FloatingActionButton(
                   // Provide an onPressed callback.
                   onPressed: () async {
+                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
                     try {
+                      print("PIC CLICKED");
+                      var imagepath = "";
                       ScaffoldMessenger.of(context).hideCurrentSnackBar();
                       dynamic resn;
                       ScaffoldMessenger.of(context)
@@ -230,15 +216,17 @@ class TakePictureScreenState extends State<TakePictureScreen> {
                         resn = reason;
                         // ignore: unrelated_type_equality_checks
                         if (reason == SnackBarClosedReason.timeout) {
-                          print("resn is $resn");
+                          print("resn inside snackbar is $resn");
                           positiony = await Geolocator.getCurrentPosition(
                               desiredAccuracy: LocationAccuracy.high);
                           print("positiony inside is $positiony \n");
+                        } else {
+                          print("resn inside snackbar(else) is $resn");
                         }
 
                         // ignore: unrelated_type_equality_checks
                       });
-                      print("resn outside is $resn");
+                      print("resn outside snackbar is $resn");
                       if (resn == "SnackBarClosedReason.timeout") {
                         ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
@@ -270,71 +258,43 @@ class TakePictureScreenState extends State<TakePictureScreen> {
                             (permis == LocationPermission.whileInUse) ||
                             (permis == LocationPermission.unableToDetermine)) {
                           await _initializeControllerFuture;
-                          final image = await _controller.takePicture();
-                          var imagepath = image.path;
-
+                          dynamic image = await _controller.takePicture();
+                          imagepath = image.path;
+                          print("Going inside get location()");
                           Map<String, String> locationdata =
                               await getLocation().then((locdata) {
                             ScaffoldMessenger.of(context).hideCurrentSnackBar();
                             return locdata;
                           });
                           String clickdatetime = DateTime.now().toString();
-                          print("\n latitude is ${locationdata["latitude"]}");
-                          print("\n longitude is ${locationdata["longitude"]}");
-                          print("\n imagepath is $imagepath");
-                          print("\n clickdatetime is $clickdatetime");
 
-                          if (locationdata["latitude"]!.isNotEmpty &&
-                              locationdata["longitude"]!.isNotEmpty &&
-                              imagepath.isNotEmpty &&
-                              clickdatetime.isNotEmpty) {
-                            if (locationdata["latitude"] == "XX" &&
-                                locationdata["longitude"] == "XX") {
-                              ScaffoldMessenger.of(context)
-                                  .hideCurrentSnackBar();
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                      content: Text(
-                                          'Your location is denied. Please enable particularly for this app')));
-                            } else {
-                              var reporesponse = await StoreDataForFuture(
-                                      locationdata["latitude"],
-                                      locationdata["longitude"],
-                                      imagepath,
-                                      clickdatetime)
-                                  .then((conn2) {
-                                return conn2;
-                              });
-                              if (reporesponse == '1') {
-                                ScaffoldMessenger.of(context)
-                                    .hideCurrentSnackBar();
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                        content: Text('OK go ahead')));
-                                // ignore: deprecated_member_use
-
-                                await Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (context) => ImagePreview(
-                                      imagePath: image.path,
-                                      latitd: locationdata["latitude"],
-                                      longitd: locationdata["longitude"],
-                                      clickedDateTime: clickdatetime,
-                                    ),
-                                  ),
-                                );
-                              } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                        content: Text('Cannot get location')));
-                                print("don problem 1");
-                              }
-                            }
-                          } else {
+                          if (locationdata["latitude"] == "XX" &&
+                              locationdata["longitude"] == "XX") {
                             ScaffoldMessenger.of(context).hideCurrentSnackBar();
                             ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                    content: Text('Cannot get location')));
+                                    content: Text(
+                                        'Your location is denied. Please enable particularly for this app')));
+                          } else if (locationdata["latitude"] == "NA" &&
+                              locationdata["longitude"] == "NA") {
+                            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text(
+                                        'Unable to get location from your device')));
+                          } else {
+                            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                            // ignore: deprecated_member_use
+                            await Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => ImagePreview(
+                                  imagePath: imagepath,
+                                  latitd: locationdata["latitude"],
+                                  longitd: locationdata["longitude"],
+                                  clickedDateTime: clickdatetime,
+                                ),
+                              ),
+                            );
                           }
                         }
                       } else if ((await Permission
@@ -357,7 +317,7 @@ class TakePictureScreenState extends State<TakePictureScreen> {
                     }
                   },
                   child: const Icon(Icons.camera_alt),
-                ),
+                )),
               ],
             ),
             visible: true,

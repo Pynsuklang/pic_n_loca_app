@@ -94,7 +94,7 @@ class _CreateAccountFormState extends State<CreateAccountForm> {
     var response;
     var responseDecode;
     try {
-      var url = Uri.parse("http://10.179.28.7:8080/api/create-account");
+      var url = Uri.parse("http://10.179.28.22:8081/api/create-account");
       print("password is $pwd");
       var data = {'name': name, 'usnm': usnm, 'pwd': pwd};
       //encode Map to JSON

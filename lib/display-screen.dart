@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
+import 'package:camera/camera.dart';
 import 'package:connectivity/connectivity.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
@@ -28,7 +30,7 @@ class ImagePreview extends StatefulWidget {
 
 class _ImagePreviewState extends State<ImagePreview> {
   var uploadTime;
-  late Timer timer;
+  late var cameras2;
   late SharedPreferences reservedata;
   @override
   void initState() {
@@ -51,19 +53,70 @@ class _ImagePreviewState extends State<ImagePreview> {
 
   @override
   Widget build(BuildContext context) {
-    var lat = widget.latitd;
-    var longt = widget.longitd;
     var imgpth = widget.imagePath;
-    var clicktime = widget.clickedDateTime;
     var responseDecode;
+    dynamic storeresponseval;
+    String base64string = "";
     Map<String, String> sending = {};
     List<String> latitudes = [];
     List<String> longitudes = [];
     List<String> imageBytes = [];
     List<String> clickedtimes = [];
     Map<String, String> mymap = {};
+    Map<String, String> tempmap = {};
+    //save data
+    // ignore: non_constant_identifier_names
+    StoreDataForFuture(
+        dynamic lati, dynamic longi, dynamic pth, dynamic clktm) async {
+      try {
+        dynamic thepth = "";
+        SharedPreferences cntry;
+        cntry = await SharedPreferences.getInstance();
+        dynamic cntrval = cntry.getInt("cntrkey");
+        print("cntrval in StoreDataForFuture() was $cntrval");
+
+        if (cntrval != null) {
+          cntrval = cntrval + 1;
+          cntry.setInt("cntrkey", cntrval);
+        } else {
+          cntrval = 1;
+        }
+        print("cntrval in StoreDataForFuture() after is now $cntrval");
+        cntry.setInt("cntrkey", cntrval);
+        thepth = pth;
+        print("path$cntrval is $pth");
+
+        File imagefile = File("");
+        imagefile = File(thepth); //convert Path to File
+        Uint8List imagebytes = Uint8List(0); //convert to bytes
+        imagebytes = await imagefile.readAsBytes();
+        base64string =
+            base64.encode(imagebytes); //convert bytes to base64 string
+        print("base64string is $base64string \n");
+
+        cntry.setInt("cntrkey", cntrval);
+        String cntrstr = cntrval.toString();
+        datalistmap = await SharedPreferences.getInstance();
+        Map<String, String> storemap = {
+          'emailid': glbusrname,
+          'latitude': lati.toString(),
+          'longitude': longi.toString(),
+          'clickedDateTime': clktm.toString(),
+          'imageByte': base64string,
+        };
+
+        String encodedMap = json.encode(storemap);
+        datalistmap.setString('reservedatalist$cntrstr', json.encode(storemap));
+        return 1;
+      } catch (e) {
+        print("Error inside StoreDataForFuture() is $e");
+      }
+    }
+
+    //save data
     SendAllData(dynamic sendtype) async {
       var reqdatas = await SharedPreferences.getInstance();
+      cntr = reqdatas = await SharedPreferences.getInstance();
       int? itemcount = cntr.getInt("cntrkey");
       if (itemcount != null) {
         itemcount = itemcount;
@@ -92,6 +145,8 @@ class _ImagePreviewState extends State<ImagePreview> {
         "longitude": jsonEncode(longitudes),
         "imageByte": jsonEncode(imageBytes),
       };
+
+      print("\n tempmap so far is now \n$tempmap");
       if (mymap.isEmpty) {
         responseDecode = '-1';
         return responseDecode;
@@ -103,7 +158,7 @@ class _ImagePreviewState extends State<ImagePreview> {
           if (chkInternet == true) {
             if (sendtype == 0) {
               var url = Uri.parse(
-                  "http://10.179.28.7:8080/api/store-datas-afternet-avl");
+                  "http://10.179.28.22:8081/api/store-datas-afternet-avl");
 
               Map<String, String> myheaders = {
                 'Content-Type': 'application/json',
@@ -127,7 +182,7 @@ class _ImagePreviewState extends State<ImagePreview> {
                 logindata.setString('username', glbusrname);
               }
             } else {
-              var url = Uri.parse("http://10.179.28.7:8080/api/store-datas");
+              var url = Uri.parse("http://10.179.28.22:8081/api/store-datas");
 
               Map<String, String> myheaders = {
                 'Content-Type': 'application/json',
@@ -174,7 +229,8 @@ class _ImagePreviewState extends State<ImagePreview> {
           return conn2;
         });
         if (chkInternet == true) {
-          var url = Uri.parse("http://10.179.28.7:8080/api/check-connectivity");
+          var url =
+              Uri.parse("http://10.179.28.22:8081/api/check-connectivity");
 
           var response = await http
               .post(url, headers: {"Content-Type": "application/json"});
@@ -203,98 +259,90 @@ class _ImagePreviewState extends State<ImagePreview> {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            FloatingActionButton(
-              onPressed: () async {
-                try {
-                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                      duration: const Duration(minutes: 10),
-                      content: Row(
-                        children: const [
-                          CircularProgressIndicator(),
-                          Text('Please wait...')
-                        ],
-                      )));
-                  var sig = await SendAllData(1).then((vals) {
-                    return vals;
-                  });
-
-                  if (sig == '1') {
-                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                        content:
-                            Text('Data is submitted and saved successfully')));
-                    Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const MyDashboard()));
-                  } else if (sig == '5') {
-                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                        content: Text(
-                            'This file is already uploaded. Please upload another file')));
-                    Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const MyDashboard()));
-                  } else if (sig == '6') {
-                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Please click again')));
-                    Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const MyDashboard()));
-                  } else if (sig == 'scex') {
-                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                        content: Text(
-                            'Server Unreacheable at the moment. Please try again later')));
-                    Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const MyDashboard()));
-                  } else if (sig == 'ni') {
-                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                        content: Text(
-                            'Internet Not Available. File will be uploaded on immidiate availability of internet!!!')));
-                    //send to protected
-                    Timer.periodic(const Duration(seconds: 5), (timer) async {
-                      print("timer started");
-
-                      var responseavail = await serverPing().then((conn2) {
-                        return conn2;
-                      });
-                      if (responseavail == true) {
-                        timer.cancel();
-                        var sig = await SendAllData(0).then((vals) {
-                          print("vals is $vals");
-                          return vals;
-                        });
-                        print("sig is $sig");
-                        if (sig == '1') {
-                          ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                          print('Canceled timer');
-                        }
+            Expanded(
+                child: FloatingActionButton(
+                    onPressed: () async {
+                      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                      try {
+                        cameras2 = await availableCameras();
+                        var secondCamera = cameras.first;
+                        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text('Data deleted successfully')));
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) =>
+                                  // TakePictureScreen(camera: secondCamera)
+                                  const MyDashboard()),
+                        );
+                      } catch (e) {
+                        print("Error in click another is $e");
                       }
+                    },
+                    child: const Icon(Icons.delete_forever))),
+            Expanded(
+              child: FloatingActionButton(
+                  child: const Icon(Icons.save),
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                    print("Will save");
+                    print(" widget.imagePath is ${widget.imagePath}");
+                    storeresponseval = StoreDataForFuture(
+                            widget.latitd,
+                            widget.longitd,
+                            // widget.imagePath,
+                            imgpth,
+                            widget.clickedDateTime)
+                        .then((storeresponse) async {
+                      print("storeresponse is $storeresponse");
+                      return storeresponse;
                     });
-                    Navigator.pushReplacement(
+                    print("storeresponseval is $storeresponseval");
+                    // ignore: unrelated_type_equality_checks
+                    if (storeresponseval == '1') {
+                      print("ba nyngkong");
+                      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                          content: Text('Data saved successfully')));
+                      Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => const MyDashboard()));
-                  } else {}
-                } catch (e) {
-                  print("Error is $e");
-                }
-              },
-              child: const Icon(Icons.upload_file),
+                            builder: (context) => const MyDashboard()),
+                      );
+                      imgpth = "";
+                    } else {
+                      print("ba ar");
+                      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                          content: Text('Data saved successfully')));
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const MyDashboard()),
+                      );
+                    }
+                  }),
             ),
           ],
         ),
-        Container(
-          child: Text("Upload All"),
-        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Container(
+              padding: const EdgeInsets.fromLTRB(0, 10, 0, 0),
+              child: const Text("Delete"),
+            ),
+            const SizedBox(
+              width: 155.0,
+            ),
+            Container(
+              padding: const EdgeInsets.fromLTRB(0, 10, 0, 0),
+              child: const Text("Save"),
+            )
+          ],
+        )
       ]),
     );
 

@@ -19,7 +19,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 late SharedPreferences logindata;
 late var cameras;
-late Position positiony;
+Position? positiony;
+dynamic openbtn = "x";
+bool chkintr = true;
 
 class MainPage extends StatelessWidget {
   @override
@@ -84,7 +86,7 @@ class _MyDashboardState extends State<MyDashboard> {
     check_if_already_login();
     initial();
     initwidgets();
-
+    checkinternet();
     // checklocpermission();
     // initlocs();
   }
@@ -94,6 +96,12 @@ class _MyDashboardState extends State<MyDashboard> {
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     // TODO: implement dispose
     super.dispose();
+  }
+
+  checkinternet() async {
+    chkintr = await serverPing2().then((conn2) {
+      return conn2;
+    });
   }
 
   void initial() async {
@@ -148,6 +156,7 @@ class _MyDashboardState extends State<MyDashboard> {
                     padding: const EdgeInsets.fromLTRB(10, 350, 20, 0),
                     child: FloatingActionButton(
                       onPressed: () async {
+                        ScaffoldMessenger.of(context).hideCurrentSnackBar();
                         if (await Permission
                             .locationWhenInUse.serviceStatus.isEnabled) {
                           LocationPermission permis;
@@ -181,122 +190,139 @@ class _MyDashboardState extends State<MyDashboard> {
                   ),
                   Container(
                     padding: const EdgeInsets.fromLTRB(50, 350, 10, 0),
-                    child: FloatingActionButton(
-                      onPressed: () async {
-                        try {
-                          var permisn = await initgetLocation().then((permis) {
-                            return permis;
-                          });
-                          print("permisn is $permisn");
-                          if (permisn == '1') {
-                            ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                duration: const Duration(minutes: 10),
-                                content: Row(
-                                  children: const [
-                                    CircularProgressIndicator(),
-                                    Text('Please wait...')
-                                  ],
-                                )));
-                            var sig = await UploadAllData(0).then((vals) {
-                              return vals;
-                            });
-                            print("sig from uploadall is $sig");
-                            if (sig == 'na') {
+                    child: chkintr == true
+                        ? FloatingActionButton(
+                            onPressed: () async {
                               ScaffoldMessenger.of(context)
                                   .hideCurrentSnackBar();
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                      content: Text(
-                                          'No snapshot(s) available at the moment')));
-                            } else if (sig == '1') {
-                              ScaffoldMessenger.of(context)
-                                  .hideCurrentSnackBar();
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                      content: Text(
-                                          'Data is submitted and saved successfully')));
-                            } else if (sig == '5') {
-                              ScaffoldMessenger.of(context)
-                                  .hideCurrentSnackBar();
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                      content: Text(
-                                          'This file is already uploaded. Please upload another file')));
-                            } else if (sig == '6') {
-                              ScaffoldMessenger.of(context)
-                                  .hideCurrentSnackBar();
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                      content: Text('Please click again')));
-                            } else if (sig == 'scex') {
-                              ScaffoldMessenger.of(context)
-                                  .hideCurrentSnackBar();
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                      content: Text('Server Unreacheable')));
-                            } else if (sig == 'ni') {
-                              //send to protected
-                              var sig2 = await UploadAllData(0).then((vals) {
-                                return vals;
-                              });
-                              if (sig2 != 'na') {
-                                ScaffoldMessenger.of(context)
-                                    .hideCurrentSnackBar();
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                        content: Text(
-                                            'Internet Not Available. File will be uploaded on immidiate availability of internet!!!')));
-                                Timer.periodic(const Duration(seconds: 5),
-                                    (timer1) async {
-                                  print("timer1 started");
-
-                                  var responseavail =
-                                      await serverPing2().then((conn2) {
-                                    return conn2;
+                              print("\n openbtn is $openbtn");
+                              if (openbtn == "x") {
+                                try {
+                                  ScaffoldMessenger.of(context)
+                                      .hideCurrentSnackBar();
+                                  ScaffoldMessenger.of(context)
+                                      .showSnackBar(SnackBar(
+                                          duration: const Duration(seconds: 30),
+                                          content: Row(
+                                            children: const [
+                                              CircularProgressIndicator(),
+                                              Text('Please wait...')
+                                            ],
+                                          )));
+                                  var sig = await UploadAllData().then((vals) {
+                                    return vals;
                                   });
-                                  if (responseavail == true) {
-                                    var sig =
-                                        await UploadAllData(1).then((vals) {
-                                      print("vals is $vals");
+                                  print("sig from uploadall is $sig");
+                                  if (sig == 'na') {
+                                    ScaffoldMessenger.of(context)
+                                        .hideCurrentSnackBar();
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                            content: Text(
+                                                'No snapshot(s) available at the moment')));
+                                  } else if (sig == '1') {
+                                    ScaffoldMessenger.of(context)
+                                        .hideCurrentSnackBar();
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                            content: Text(
+                                                'Data is submitted and saved successfully')));
+                                  } else if (sig == '5') {
+                                    ScaffoldMessenger.of(context)
+                                        .hideCurrentSnackBar();
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                            content: Text(
+                                                'This file is already uploaded. Please upload another file')));
+                                  } else if (sig == '6') {
+                                    ScaffoldMessenger.of(context)
+                                        .hideCurrentSnackBar();
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                            content:
+                                                Text('Please click again')));
+                                  } else if (sig == 'scex') {
+                                    ScaffoldMessenger.of(context)
+                                        .hideCurrentSnackBar();
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                            content:
+                                                Text('Server Unreacheable')));
+                                  } else if (sig == 'ni') {
+                                    //send to protected
+                                    setState(() {
+                                      openbtn = "y";
+                                    });
+                                    var sig2 =
+                                        await UploadAllData().then((vals) {
                                       return vals;
                                     });
-                                    print("sig is $sig");
-                                    if (sig == '1') {
-                                      timer1.cancel();
-                                      print('Canceled timer1');
+                                    if (sig2 == 'ni') {
+                                      ScaffoldMessenger.of(context)
+                                          .hideCurrentSnackBar();
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(const SnackBar(
+                                              content: Text(
+                                                  'Internet Not Available. File will be uploaded on immidiate availability of internet!!!')));
+                                      Timer.periodic(const Duration(seconds: 5),
+                                          (timer1) async {
+                                        print("timer1 started");
+
+                                        var responseavail =
+                                            await serverPing2().then((conn2) {
+                                          return conn2;
+                                        });
+                                        if (responseavail == true) {
+                                          var sig = await UploadAllData()
+                                              .then((vals) {
+                                            print("vals is $vals");
+                                            return vals;
+                                          });
+                                          print("sig is $sig");
+                                          if (sig == '1') {
+                                            timer1.cancel();
+                                            setState(() {
+                                              openbtn = "x";
+                                            });
+                                            print('Canceled timer1');
+                                          }
+                                        }
+                                      });
+                                    } else {
+                                      ScaffoldMessenger.of(context)
+                                          .hideCurrentSnackBar();
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(const SnackBar(
+                                              content: Text(
+                                                  'Data(s) not available at the moment')));
                                     }
+                                  } else {
+                                    ScaffoldMessenger.of(context)
+                                        .hideCurrentSnackBar();
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                            content: Text(
+                                                'Internet Not Available. File will be uploaded on immidiate availability of internet!!!')));
                                   }
-                                });
+                                } catch (e) {
+                                  ScaffoldMessenger.of(context)
+                                      .hideCurrentSnackBar();
+                                  print("Error on UploadAllData() is $e");
+                                }
                               } else {
                                 ScaffoldMessenger.of(context)
                                     .hideCurrentSnackBar();
                                 ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
-                                        content: Text(
-                                            'Data(s) not available at the moment')));
+                                        content:
+                                            Text('Internet Not Available')));
                               }
-                            } else {
-                              ScaffoldMessenger.of(context)
-                                  .hideCurrentSnackBar();
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('ERROR!!!')));
-                            }
-                          } else {
-                            ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                            ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                    content: Text(
-                                        'Please set location permission for this app to "Always" or "WhileInUse"')));
-                          }
-                        } catch (e) {
-                          ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                          print("Error on UploadAllData() is $e");
-                        }
-                      },
-                      //tooltip: tkn != "" ? 'Take Picture' : 'take pics',
-                      child: const Icon(Icons.upload_file),
-                    ),
+                            },
+                            //tooltip: tkn != "" ? 'Take Picture' : 'take pics',
+                            child: const Icon(Icons.upload_file),
+                          )
+                        : const Icon(
+                            Icons.signal_cellular_connected_no_internet_4_bar),
                   )
                 ],
               ),
@@ -309,7 +335,9 @@ class _MyDashboardState extends State<MyDashboard> {
                   ),
                   Container(
                     padding: const EdgeInsets.fromLTRB(10, 10, 20, 0),
-                    child: const Text("Upload All"),
+                    child: chkintr == true
+                        ? const Text("Upload All")
+                        : const Text("No Internet"),
                   )
                 ],
               )

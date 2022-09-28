@@ -10,12 +10,12 @@ import 'package:pic_n_loca_app/upload-all-pics.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'homepage.dart';
 
-
 import 'package:http/http.dart' as http;
 
 void main() => runApp(MyApp());
 var glbusrname;
 late SharedPreferences cntr;
+var timeactive = 1;
 String username = "";
 List<dynamic> tosend = [];
 late SharedPreferences tableAvl;
@@ -57,39 +57,47 @@ class _MyLoginPageState extends State<MyLoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Login"),
-        automaticallyImplyLeading: false,
-      ),
-      body: Center(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: <Widget>[
-            const LoginForm(),
-            // TextButton(
-            //   onPressed: () {
-            //     Navigator.push(
-            //         context,
-            //         MaterialPageRoute(
-            //             builder: (context) => const ForgotPwdPg()));
-            //   },
-            //   child: const Text(
-            //     'Forgot Password',
-            //   ),
-            // ),
-            TextButton(
-              onPressed: () {
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => CreateAccountPage()));
-              },
-              child: const Text(
-                'Create Account',
+    return WillPopScope(
+      onWillPop: () async {
+        // show the snackbar with some text
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('The System Back Button is Deactivated')));
+        return false;
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text("Login"),
+          automaticallyImplyLeading: false,
+        ),
+        body: Center(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: <Widget>[
+              const LoginForm(),
+              // TextButton(
+              //   onPressed: () {
+              //     Navigator.push(
+              //         context,
+              //         MaterialPageRoute(
+              //             builder: (context) => const ForgotPwdPg()));
+              //   },
+              //   child: const Text(
+              //     'Forgot Password',
+              //   ),
+              // ),
+              TextButton(
+                onPressed: () {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => CreateAccountPage()));
+                },
+                child: const Text(
+                  'Create Account',
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -116,7 +124,7 @@ class _LoginFormState extends State<LoginForm> {
     var response;
     var responseDecode;
     try {
-      var url = Uri.parse("http://10.179.28.7:8080/api/user-login");
+      var url = Uri.parse("http://10.179.28.22:8081/api/user-login");
       Map data = {'email': usnm, 'password': pwd};
       var body = json.encode(data);
       response = await http.post(url,

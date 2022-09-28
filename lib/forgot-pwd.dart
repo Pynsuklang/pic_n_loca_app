@@ -85,7 +85,7 @@ class _ForgotPwdState extends State<ForgotPwd> {
     var response;
     var responseDecode;
     try {
-      var url = Uri.parse("http://10.179.28.7:8080/api/forgot-pwd");
+      var url = Uri.parse("http://10.179.28.22:8081/api/forgot-pwd");
       Map data = {'email': usnm};
       var body = json.encode(data);
       response = await http.post(url,
